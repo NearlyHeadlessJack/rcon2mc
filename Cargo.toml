@@ -1,11 +1,11 @@
 [package]
 name = "rcon2mc"
-version = "0.0.1-dev.1"
+version = "0.0.1-dev.2"
 edition = "2024"
 description = "A Rcon Client for Minecraft Server with lib  and cli tool, also with a rcon2http server"
 license = "MIT"
 repository = "https://github.com/NearlyHeadlessJack/rcon2mc"
-authors = ["NearlyHeadlessJack <nearlyheadlessjack@gmail.com>"]
+authors = ["NearlyHeadlessJack <wang@rjack.cn>"]
 keywords = ["rcon", "minecraft", "http", "cli"]
 readme = "README.md"
 exclude = ["target/", "examples/", "tests/",".github/"]
