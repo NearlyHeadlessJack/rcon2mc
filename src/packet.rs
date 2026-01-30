@@ -3,14 +3,14 @@ use crate::globals::*;
 
 
 
-pub struct  Packet{
+pub struct PacketBuilder {
     id:i32,
     packet_type:PacketType,
     payload:String,
     terminator: char,
 }
 
-impl Packet{
+impl PacketBuilder {
     fn new(&mut self) ->Result<ClientPacket,String>{
 
         // check input
@@ -52,13 +52,13 @@ impl Packet{
 
 
 pub fn test_packet(){
-    let mut packet = Packet{
+    let mut packet = PacketBuilder {
         id:1,
         packet_type:PacketType::ServerdataAuthResponseOrExeccommand,
         payload:"testt".to_string(),
         terminator:DEFAULT_TERMINATOR,
     };
-    let p = Packet::new(&mut packet);
+    let p = PacketBuilder::new(&mut packet);
     println!("{}",p.unwrap());
 
 }

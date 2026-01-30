@@ -3,7 +3,7 @@ use std::fmt::Display;
 // const ServerdataAuthResponse:i32 = 2;
 // const ServerdataExeccommand:i32 = 2;
 // const ServerdataResponseValue:i32 = 0;
-use crate::packet::Packet;
+use crate::packet::PacketBuilder;
 #[repr(i32)]
 #[derive(Debug,Copy,Clone)]
 pub enum PacketType {
