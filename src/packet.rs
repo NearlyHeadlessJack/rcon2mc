@@ -18,8 +18,8 @@ impl Packet{
         // create packet
         let id_b = self.convert_id().unwrap();
         let packet_type_b = self.convert_packet_type().unwrap();
-        let p2 = self.payload.clone();
-        let size_b = self.get_size(p2.as_str()).unwrap();
+        let p2 = self.payload.as_str();
+        let size_b = self.get_size(p2).unwrap();
         let payload_b = self.convert_payload().unwrap();
 
         let packet = ClientPacket::new(size_b,id_b,packet_type_b,payload_b,0x00);
