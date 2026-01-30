@@ -1,3 +1,3 @@
 pub mod globals;
-mod packet;
+pub mod packet;
 
