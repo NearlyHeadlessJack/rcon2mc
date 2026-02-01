@@ -26,7 +26,7 @@ const MAX_PAYLOAD_SIZE: usize = 1446;
 pub type PacketBytes = Vec<u8>;
 
 #[repr(i32)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum PacketType {
     Auth = 3,
     AuthResponseAndExecCommand = 2,
@@ -167,7 +167,7 @@ impl PacketInBytes {
 
 /// Raw byte data will be segmented into multiple packets and classified.
 #[derive(Debug)]
-struct ReceivedPacketList {
+pub struct ReceivedPacketList {
     length: i32,
     /// For received packets,
     /// `2` is `SERVERDATA_AUTH_RESPONSE` or `AuthResponseAndExecCommand`
@@ -180,7 +180,7 @@ impl ReceivedPacketList {
     pub fn new(raw_data: &[u8]) -> Result<ReceivedPacketList, &'static str> {
         todo!()
     }
-    fn slicer(raw_data: &[u8]) -> Result<Vec<Vec<u8>>, &'static str> {
+    pub fn slicer(raw_data: &[u8]) -> Result<Vec<Vec<u8>>, &'static str> {
         const TERMINATOR_FLAG: u8 = 0x00;
         let mut packets_list: Vec<Vec<u8>> = Vec::new();
         let mut last_idx = 12usize;
@@ -221,8 +221,41 @@ impl ReceivedPacketList {
         Ok(packets_list)
     }
     fn classifier(packets: &Vec<Vec<u8>>) -> Result<Vec<PacketType>, &'static str> {
-        todo!()
+        let mut packet_type_list: Vec<PacketType> = vec![];
+        for packet in packets.iter() {
+            dbg!(packet);
+            let packet_type = packet[8..12]
+                .try_into()
+                .ok()
+                .map(i32::from_le_bytes)
+                .expect("cannot convert raw bytes to packet type");
+            match packet_type {
+                3 => {
+                    packet_type_list.push(PacketType::Auth);
+                }
+                2 => {
+                    packet_type_list.push(PacketType::AuthResponseAndExecCommand);
+                }
+                0 => {
+                    packet_type_list.push(PacketType::Response);
+                }
+                _ => {
+                    packet_type_list.push(PacketType::Invalid);
+                }
+            }
+        }
+        Ok(packet_type_list)
     }
+}
+
+#[cfg(debug_assertions)]
+pub fn test_slicer(raw_data: &[u8]) -> Result<Vec<Vec<u8>>, &'static str> {
+    ReceivedPacketList::slicer(raw_data)
+}
+
+#[cfg(debug_assertions)]
+pub fn test_classifier(packets: &Vec<Vec<u8>>) -> Result<Vec<PacketType>, &'static str> {
+    ReceivedPacketList::classifier(packets)
 }
 
 #[cfg(test)]
@@ -251,77 +284,5 @@ mod tests {
             .build();
         let packet = PacketInBytes::convert_to_bytes(&packet.unwrap());
         assert!(packet.is_ok());
-    }
-
-    #[test]
-    fn test_packets_slicer() {
-        let test1 = [0x00];
-        let test2 = [0x00, 0x00];
-        assert!(ReceivedPacketList::slicer(&test1).is_err());
-        assert!(ReceivedPacketList::slicer(&test2).is_err());
-
-        let test3 = [
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        ];
-        assert!(ReceivedPacketList::slicer(&test3).is_err());
-        let test4 = [
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        ];
-        assert!(ReceivedPacketList::slicer(&test4).is_ok());
-
-        let test5 = [
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        ];
-
-        assert_eq!(
-            ReceivedPacketList::slicer(&test5).unwrap(),
-            vec![
-                vec![
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00
-                ],
-                vec![
-                    0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00
-                ]
-            ]
-        );
-        let test6 = [
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x22, 0x22, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        ];
-        assert_eq!(
-            ReceivedPacketList::slicer(&test6).unwrap(),
-            vec![
-                vec![
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00
-                ],
-                vec![
-                    0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00
-                ]
-            ]
-        );
-        let test7 = [
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x22, 0x22, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        ];
-        assert_eq!(
-            ReceivedPacketList::slicer(&test7).unwrap(),
-            vec![
-                vec![
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00
-                ],
-                vec![
-                    0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00
-                ]
-            ]
-        );
     }
 }
