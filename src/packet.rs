@@ -168,7 +168,7 @@ impl PacketInBytes {
 /// Raw byte data will be segmented into multiple packets and classified.
 #[derive(Debug)]
 pub struct ReceivedPacketList {
-    length: i32,
+    length: usize,
     /// For received packets,
     /// `2` is `SERVERDATA_AUTH_RESPONSE` or `AuthResponseAndExecCommand`
     /// `0` is `SERVERDATA_RESPONSE_VALUE` or `Response`
@@ -178,9 +178,19 @@ pub struct ReceivedPacketList {
 }
 impl ReceivedPacketList {
     pub fn new(raw_data: &[u8]) -> Result<ReceivedPacketList, &'static str> {
-        todo!()
+        let packets = ReceivedPacketList::slicer(raw_data).expect("cannot slice packets");
+        let length= packets.len();
+        let packet_type_list = ReceivedPacketList::classifier(&packets).expect("cannot read packets types");
+
+        Ok(Self{
+            length,
+            packet_type_list,
+            packets,
+        })
     }
-    pub fn slicer(raw_data: &[u8]) -> Result<Vec<Vec<u8>>, &'static str> {
+
+    // size filed is not used
+    fn slicer(raw_data: &[u8]) -> Result<Vec<Vec<u8>>, &'static str> {
         const TERMINATOR_FLAG: u8 = 0x00;
         let mut packets_list: Vec<Vec<u8>> = Vec::new();
         let mut last_idx = 12usize;
@@ -219,6 +229,46 @@ impl ReceivedPacketList {
         }
 
         Ok(packets_list)
+    }
+
+    // size field is used, in case of segments
+    fn slicer_using_size(raw_data: &[u8]) -> Option<Vec<Vec<u8>>> {
+        let mut packets_list: Vec<Vec<u8>> = Vec::new();
+        let mut counter = 0;
+        let mut last_idx = 0usize;
+        if raw_data.len() < 4 {
+            return  None
+        }
+        while last_idx < raw_data.len() {
+            if raw_data.len() - last_idx < 4 {
+                break;
+            }
+            let raw_size = raw_data[last_idx..last_idx + 4]
+                .try_into()
+                .ok()
+                .map(i32::from_le_bytes)
+                .expect("cannot convert raw bytes to packet size");
+            if (raw_size as usize +4 + last_idx) > raw_data.len() {
+                break;
+            }
+            if raw_size < 10 {
+                break
+            }
+            // in case of segments
+            if raw_size > 1456 {
+                break
+            }
+            let packet = raw_data[last_idx..last_idx + (raw_size as usize) + 4].to_vec();
+            packets_list.push(packet);
+            counter += 1;
+            last_idx += raw_size as usize + 4 + last_idx;
+        }
+
+        if counter == 0 {
+            return None;
+        }
+        Some(packets_list)
+
     }
     fn classifier(packets: &Vec<Vec<u8>>) -> Result<Vec<PacketType>, &'static str> {
         let mut packet_type_list: Vec<PacketType> = vec![];
