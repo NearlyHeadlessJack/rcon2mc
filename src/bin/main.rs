@@ -1,61 +1,39 @@
-// use tokio::io::{AsyncReadExt, AsyncWriteExt};
-// use tokio::net::TcpStream;
-use rcon2mc::packet::test_packet;
-// #[tokio::main]
-// async fn main() -> Result<(), Box<dyn std::error::Error>> {
-//     let mut stream = TcpStream::connect("mc.rjack.cn:25575").await?;
-//
-//     // 硬编码的字节序列 [06 00 00 00 03 00 00 00 00 00]
-//     let packet_bytes: [u8; 25] = [
-//         0x15, 0x00, 0x00, 0x00,  // 整数 21
-//         0x03, 0x00, 0x00, 0x00,  // 整数 3
-//         0x03, 0x00, 0x00, 0x00,  //
-//         0x77, 0x61, 0x6E, 0x67,  // wang
-//         0x78, 0x75, 0x61, 0x6E,  // xuan
-//         0x35, 0x31, 0x32,        // 512
-//         0x00, 0x00,              // 第三部分：'\0'
-//     ];
-//
-//     // 发送数据
-//     stream.write_all(&packet_bytes).await?;
-//
-//     // 读取响应
-//     let mut buffer = [0u8; 1024];
-//     let n = stream.read(&mut buffer).await?;
-//
-//     println!("收到 {} 字节", n);
-//
-//     // 显示原始数据
-//     display_raw_data(&buffer[..n]);
-//
-//     let packet_bytes: [u8; 18] = [
-//         0x0E, 0x00, 0x00, 0x00,  // size
-//         0x04, 0x00, 0x00, 0x00,  // id
-//         0x02, 0x00, 0x00, 0x00,  // type
-//         0x6C, 0x69, 0x73, 0x74,  // cmd
-//         0x00, 0x00,              // 第三部分：'\0'
-//     ];
-//     stream.write_all(&packet_bytes).await?;
-//     // 读取响应
-//     let mut buffer = [0u8; 1024];
-//     let n = stream.read(&mut buffer).await?;
-//
-//     println!("收到 {} 字节", n);
-//
-//     // 显示原始数据
-//     display_raw_data(&buffer[..n]);
-//
-//
-//     Ok(())
-// }
-//
-// fn display_raw_data(data: &[u8]) {
-//     println!("原始字节：");
-//     for (i, &byte) in data.iter().enumerate() {
-//         println!("[{:03}] 0x{:02x} = 0b{:08b}", i, byte, byte);
-//     }
-// }
+/*
+ * // Copyright (c) 2026 Jack Wang
+ * //
+ * // Permission is hereby granted, free of charge, to any person obtaining a copy
+ * // of this software and associated documentation files (the "Software"), to deal
+ * // in the Software without restriction, including without limitation the rights
+ * // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * // copies of the Software, and to permit persons to whom the Software is
+ * // furnished to do so, subject to the following conditions:
+ * //
+ * // The above copyright notice and this permission notice shall be included in all
+ * // copies or substantial portions of the Software.
+ * //
+ * // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * // SOFTWARE.
+ * //
+ * // Author: Jack Wang <wang@rjack.cn>
+ * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
+ */
+use rcon2mc::packet::{PacketWithoutSize, PacketInBytes};
+fn main() {
+    let packet_frontend = PacketWithoutSize::builder()
+        .id(1)
+        .packet_type(rcon2mc::packet::PacketType::Auth)
+        .payload(String::from("rcon_password")).unwrap()
+        .terminator(None)
+        .build()
+        .unwrap();
+    println!("{:?}", packet_frontend);
+    let packet_bytes = PacketInBytes::convert_to_bytes(&packet_frontend);
+    println!("{:?}", packet_bytes.unwrap());
 
-fn main(){
-    test_packet()
+
 }

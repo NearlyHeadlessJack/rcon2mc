@@ -16,6 +16,7 @@ exclude = ["target/", "examples/", "tests/",".github/"]
 hex = "0.4.3"
 base64 = "0.22.1"
 tokio = { version = "1.49.0", features = ["full"] }
+thiserror = "2.0.18"
 [lib]
 name = "rcon2mc"
 path = "src/lib.rs"
