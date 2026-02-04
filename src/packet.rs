@@ -37,6 +37,7 @@ pub enum PacketType {
 
 /// Handle the inputs from front-end and check inputs
 #[derive(Debug)]
+#[derive(PartialEq)]
 pub struct PacketWithoutSize {
     id: i32,
     packet_type: PacketType,
@@ -79,7 +80,7 @@ impl PacketWithoutSizeBuilder {
     /// Set up `payload`
     /// Length of `payload` should be less than **1446 Bytes**
     pub fn payload(mut self, payload: String) -> Result<Self, &'static str> {
-        /// 注意：要检查不能有\0
+        // 注意：要检查不能有\0
         if &payload.len() > &MAX_PAYLOAD_SIZE {
             return Err("payload is too long");
         }
@@ -177,6 +178,7 @@ pub struct ReceivedPacketList {
     packets: Vec<Vec<u8>>,
 }
 impl ReceivedPacketList {
+    /// Put data in buffer here
     pub fn new(raw_data: &[u8]) -> Result<ReceivedPacketList, &'static str> {
         let packets = ReceivedPacketList::slicer(raw_data).expect("cannot slice packets");
         let length= packets.len();
@@ -296,6 +298,46 @@ impl ReceivedPacketList {
         }
         Ok(packet_type_list)
     }
+
+    /// Convert raw data from buffer into `PacketWithoutSize`
+    pub fn into_packet_without_size(self)->Result<Vec<PacketWithoutSize>, &'static str>{
+        // let mut rest_length = self.length;
+        let mut id_list: Vec<i32> = vec![];
+        let type_list: Vec<PacketType> = self.packet_type_list.clone();
+        let mut payload_list: Vec<String> = vec![];
+        let mut packet_result_list:Vec<PacketWithoutSize>= vec![];
+        for packet in self.packets.iter() {
+            let id = packet[4..8]
+                .try_into()
+                .ok()
+                .map(i32::from_le_bytes)
+                .expect("cannot convert raw bytes to packet id");
+            let payload = packet[12..packet.len() - 2]
+                .to_vec()
+                .into_iter()
+                .map(|x| x as char)
+                .collect::<String>();
+            id_list.push(id);
+            payload_list.push(payload);
+        }
+        if type_list.len() != payload_list.len() {
+            return Err("packet_type_list and payload_list length mismatch");
+        }
+        if type_list.len() != id_list.len() {
+            return Err("packet_type_list and id_list length mismatch");
+        }
+        for idx in 0..type_list.len(){
+            let new_packet = PacketWithoutSize::builder()
+                .id(id_list[idx])
+                .packet_type(type_list[idx])
+                .payload(payload_list[idx].clone()).unwrap()
+                .terminator(Some('\0'))
+                .build()?;
+            packet_result_list.push(new_packet);
+        }
+        Ok(packet_result_list)
+
+    }
 }
 
 #[cfg(debug_assertions)]
@@ -335,4 +377,22 @@ mod tests {
         let packet = PacketInBytes::convert_to_bytes(&packet.unwrap());
         assert!(packet.is_ok());
     }
+
+    #[test]
+    fn test_received_packet_into_packet_without_size() {
+        let test1 = PacketWithoutSize::builder()
+            .id(1)
+            .packet_type(PacketType::Auth)
+            .payload("test".to_string())
+            .unwrap()
+            .terminator(Some('\0'))
+            .build().unwrap();
+
+        let packet1 = PacketInBytes::convert_to_bytes(&test1).unwrap()
+            .get_packet().clone();
+        let packet_r = ReceivedPacketList::new(packet1.as_slice());
+        let result = packet_r.unwrap().into_packet_without_size();
+        assert_eq!(result.unwrap(), vec![test1])
+    }
+
 }
