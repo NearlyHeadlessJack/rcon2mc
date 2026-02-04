@@ -25,19 +25,8 @@
 use rcon2mc::packet::{PacketWithoutSize, PacketInBytes};
 use rcon2mc::connect_manager::ConnectManager;
 use rcon2mc::packet::ReceivedPacketList;
+use rcon2mc::rcon::Rcon;
 fn main() {
-    let mut connection = ConnectManager::builder()
-        .max_timeout(3)
-        .buffer_size(2920)
-        .host("baidu.com".to_string())
-        .port(25575)
-        .connect().unwrap();
-    connection.send_auth(&"123321".to_string(), 2).unwrap();
-    let a = connection.receive_packet().unwrap();
-    connection.send_command(&"list".to_string(), 3).unwrap();
-    let b = connection.receive_packet().unwrap();
-    println!("{:02X?}", a);
-    println!("{:?}", b);
-    let bb = ReceivedPacketList::new( b.as_slice()).unwrap().into_packet_without_size();
-    dbg!(bb.unwrap());
+    let a = Rcon::new("baidu.com".to_string(), 25575, "123".to_string(),10);
+    dbg!(a.unwrap());
 }

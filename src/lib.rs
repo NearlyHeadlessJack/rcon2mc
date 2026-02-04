@@ -24,3 +24,4 @@
  */
 pub mod connect_manager;
 pub mod packet;
+pub mod rcon;

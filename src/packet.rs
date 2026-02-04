@@ -54,6 +54,9 @@ impl PacketWithoutSize {
             terminator: Some('\0'),
         }
     }
+    pub fn check_auth(id:i32,ans:&Self)->bool{
+        ans.packet_type==PacketType::AuthResponseAndExecCommand && ans.id==id
+    }
 }
 
 /// Builder for `PacketWithoutSize`
