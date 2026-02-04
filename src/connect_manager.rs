@@ -27,8 +27,8 @@ use crate::packet::{
 };
 use std::io::{Read, Write};
 use std::net::TcpStream;
+use std::net::{SocketAddr, ToSocketAddrs};
 use std::time::Duration;
-
 #[derive(Debug)]
 pub struct ConnectManager {
     pub max_timeout: u64,
@@ -82,8 +82,12 @@ impl ConnectManager {
         let mut buffer: Vec<u8> = vec![0; self.buffer_size];
         let mut raw_data: Vec<u8> = Vec::new();
         let mut total_read = 0;
+        let start_time = std::time::Instant::now();
 
         loop {
+            if start_time.elapsed().as_secs() > self.max_timeout {
+                return Err("Timeout");
+            }
             match self.stream.read(&mut buffer) {
                 Ok(0) => {
                     if total_read == 0 {
@@ -136,19 +140,41 @@ impl ConnectManagerBuilder {
     pub fn connect(mut self) -> Result<ConnectManager, &'static str> {
         let hostname = self.host.clone().unwrap();
         let port = self.port.unwrap();
-        let stream =
-            Some(TcpStream::connect((hostname, port)).expect("tcp连接时发生错误")).unwrap();
-        stream
+        let start_time = std::time::Instant::now();
+        let mut tcp_stream: TcpStream;
+        let addr = format!("{}:{}", hostname, port);
+        let socket_addrs: Vec<SocketAddr> = addr.to_socket_addrs().unwrap().collect();
+
+        loop {
+            if start_time.elapsed().as_secs() > self.max_timeout.unwrap() {
+                return Err("Timeout");
+            }
+
+            match TcpStream::connect_timeout(
+                &socket_addrs[0],
+                Duration::from_secs(self.max_timeout.unwrap()),
+            ) {
+                Ok(stream) => {
+                    tcp_stream = stream;
+                    break;
+                }
+                Err(e) => {
+                    dbg!(e);
+                    return Err("Err");
+                }
+            }
+        }
+        tcp_stream
             .set_read_timeout(Some(Duration::from_secs(self.max_timeout.unwrap())))
             .map_err(|_| "Failed to set read timeout")?;
-        stream
+        tcp_stream
             .set_write_timeout(Some(Duration::from_secs(self.max_timeout.unwrap())))
             .map_err(|_| "Failed to set write timeout")?;
 
         Ok(ConnectManager {
             max_timeout: self.max_timeout.ok_or("max_timeout未设置")?,
             buffer_size: self.buffer_size.ok_or("buffer_size未设置")?,
-            stream,
+            stream: tcp_stream,
             host: self.host.ok_or("host未设置")?,
             port: self.port.ok_or("port未设置")?,
         })

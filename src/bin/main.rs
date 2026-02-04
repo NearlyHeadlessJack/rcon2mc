@@ -27,7 +27,7 @@ use rcon2mc::connect_manager::ConnectManager;
 use rcon2mc::packet::ReceivedPacketList;
 fn main() {
     let mut connection = ConnectManager::builder()
-        .max_timeout(5)
+        .max_timeout(3)
         .buffer_size(2920)
         .host("baidu.com".to_string())
         .port(25575)
