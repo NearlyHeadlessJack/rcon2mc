@@ -36,8 +36,7 @@ pub enum PacketType {
 }
 
 /// Handle the inputs from front-end and check inputs
-#[derive(Debug)]
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct PacketWithoutSize {
     id: i32,
     packet_type: PacketType,
@@ -181,10 +180,11 @@ impl ReceivedPacketList {
     /// Put data in buffer here
     pub fn new(raw_data: &[u8]) -> Result<ReceivedPacketList, &'static str> {
         let packets = ReceivedPacketList::slicer(raw_data).expect("cannot slice packets");
-        let length= packets.len();
-        let packet_type_list = ReceivedPacketList::classifier(&packets).expect("cannot read packets types");
+        let length = packets.len();
+        let packet_type_list =
+            ReceivedPacketList::classifier(&packets).expect("cannot read packets types");
 
-        Ok(Self{
+        Ok(Self {
             length,
             packet_type_list,
             packets,
@@ -239,7 +239,7 @@ impl ReceivedPacketList {
         let mut counter = 0;
         let mut last_idx = 0usize;
         if raw_data.len() < 4 {
-            return  None
+            return None;
         }
         while last_idx < raw_data.len() {
             if raw_data.len() - last_idx < 4 {
@@ -250,15 +250,15 @@ impl ReceivedPacketList {
                 .ok()
                 .map(i32::from_le_bytes)
                 .expect("cannot convert raw bytes to packet size");
-            if (raw_size as usize +4 + last_idx) > raw_data.len() {
+            if (raw_size as usize + 4 + last_idx) > raw_data.len() {
                 break;
             }
             if raw_size < 10 {
-                break
+                break;
             }
             // in case of segments
             if raw_size > 1456 {
-                break
+                break;
             }
             let packet = raw_data[last_idx..last_idx + (raw_size as usize) + 4].to_vec();
             packets_list.push(packet);
@@ -270,12 +270,10 @@ impl ReceivedPacketList {
             return None;
         }
         Some(packets_list)
-
     }
     fn classifier(packets: &Vec<Vec<u8>>) -> Result<Vec<PacketType>, &'static str> {
         let mut packet_type_list: Vec<PacketType> = vec![];
         for packet in packets.iter() {
-            dbg!(packet);
             let packet_type = packet[8..12]
                 .try_into()
                 .ok()
@@ -300,12 +298,12 @@ impl ReceivedPacketList {
     }
 
     /// Convert raw data from buffer into `PacketWithoutSize`
-    pub fn into_packet_without_size(self)->Result<Vec<PacketWithoutSize>, &'static str>{
+    pub fn into_packet_without_size(self) -> Result<Vec<PacketWithoutSize>, &'static str> {
         // let mut rest_length = self.length;
         let mut id_list: Vec<i32> = vec![];
-        let type_list: Vec<PacketType> = self.packet_type_list.clone();
+        let type_list: Vec<PacketType> = self.packet_type_list;
         let mut payload_list: Vec<String> = vec![];
-        let mut packet_result_list:Vec<PacketWithoutSize>= vec![];
+        let mut packet_result_list: Vec<PacketWithoutSize> = vec![];
         for packet in self.packets.iter() {
             let id = packet[4..8]
                 .try_into()
@@ -326,17 +324,17 @@ impl ReceivedPacketList {
         if type_list.len() != id_list.len() {
             return Err("packet_type_list and id_list length mismatch");
         }
-        for idx in 0..type_list.len(){
+        for idx in 0..type_list.len() {
             let new_packet = PacketWithoutSize::builder()
                 .id(id_list[idx])
                 .packet_type(type_list[idx])
-                .payload(payload_list[idx].clone()).unwrap()
+                .payload(payload_list[idx].clone())
+                .unwrap()
                 .terminator(Some('\0'))
                 .build()?;
             packet_result_list.push(new_packet);
         }
         Ok(packet_result_list)
-
     }
 }
 
@@ -386,13 +384,15 @@ mod tests {
             .payload("test".to_string())
             .unwrap()
             .terminator(Some('\0'))
-            .build().unwrap();
+            .build()
+            .unwrap();
 
-        let packet1 = PacketInBytes::convert_to_bytes(&test1).unwrap()
-            .get_packet().clone();
+        let packet1 = PacketInBytes::convert_to_bytes(&test1)
+            .unwrap()
+            .get_packet()
+            .clone();
         let packet_r = ReceivedPacketList::new(packet1.as_slice());
         let result = packet_r.unwrap().into_packet_without_size();
         assert_eq!(result.unwrap(), vec![test1])
     }
-
 }

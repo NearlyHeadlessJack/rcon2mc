@@ -22,4 +22,5 @@
  * // Author: Jack Wang <wang@rjack.cn>
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
+pub mod connect_manager;
 pub mod packet;

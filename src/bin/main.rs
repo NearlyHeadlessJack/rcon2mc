@@ -23,17 +23,21 @@
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
 use rcon2mc::packet::{PacketWithoutSize, PacketInBytes};
+use rcon2mc::connect_manager::ConnectManager;
+use rcon2mc::packet::ReceivedPacketList;
 fn main() {
-    let packet_frontend = PacketWithoutSize::builder()
-        .id(1)
-        .packet_type(rcon2mc::packet::PacketType::Auth)
-        .payload(String::from("rcon_password")).unwrap()
-        .terminator(None)
-        .build()
-        .unwrap();
-    println!("{:?}", packet_frontend);
-    let packet_bytes = PacketInBytes::convert_to_bytes(&packet_frontend);
-    println!("{:?}", packet_bytes.unwrap());
-
-
+    let mut connection = ConnectManager::builder()
+        .max_timeout(5)
+        .buffer_size(2920)
+        .host("baidu.com".to_string())
+        .port(25575)
+        .connect().unwrap();
+    connection.send_auth(&"123321".to_string(), 2).unwrap();
+    let a = connection.receive_packet().unwrap();
+    connection.send_command(&"list".to_string(), 3).unwrap();
+    let b = connection.receive_packet().unwrap();
+    println!("{:02X?}", a);
+    println!("{:?}", b);
+    let bb = ReceivedPacketList::new( b.as_slice()).unwrap().into_packet_without_size();
+    dbg!(bb.unwrap());
 }
