@@ -109,7 +109,12 @@ impl ConnectManager {
                 }
             }
         }
+
         Ok(raw_data)
+    }
+    pub fn shutdown(&mut self) -> Result<(), &'static str> {
+        self.stream.shutdown(std::net::Shutdown::Both).unwrap();
+        Ok(())
     }
 }
 

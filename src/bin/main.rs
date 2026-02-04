@@ -27,6 +27,11 @@ use rcon2mc::connect_manager::ConnectManager;
 use rcon2mc::packet::ReceivedPacketList;
 use rcon2mc::rcon::Rcon;
 fn main() {
-    let a = Rcon::new("baidu.com".to_string(), 25575, "123".to_string(),10);
-    dbg!(a.unwrap());
+    let a = Rcon::builder()
+        .host("1".to_string())
+        .port(25575)
+        .timeout(3)
+        .password("1".to_string())
+        .build();
+    a.unwrap().exec("list".to_string());
 }
