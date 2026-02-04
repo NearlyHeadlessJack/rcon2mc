@@ -23,81 +23,90 @@
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
 use crate::connect_manager::ConnectManager;
-use crate::packet::{PacketType, PacketInBytes, PacketWithoutSize, ReceivedPacketList};
+use crate::packet::{PacketInBytes, PacketType, PacketWithoutSize, ReceivedPacketList};
 use rand::Rng;
 #[derive(Debug)]
-pub struct Rcon{
+pub struct Rcon {
     host: String,
     port: u16,
     password: String,
     timeout: u64,
-    last_id:i32,
+    last_id: i32,
 }
-impl Rcon{
+impl Rcon {
     pub fn builder() -> RconBuilder {
-        RconBuilder{
+        RconBuilder {
             host: None,
             port: Some(25575),
             password: None,
             timeout: Some(3),
             last_id: Some(0),
         }
-
     }
 
-    fn auth(&self)->Result<bool, String>{
+    fn auth(&self) -> Result<bool, String> {
         let random_id: i32 = rand::rng().random_range(1..=1000);
-        let mut socket =  ConnectManager::builder()
+        let mut socket = ConnectManager::builder()
             .host(self.host.clone())
             .port(self.port)
             .max_timeout(self.timeout)
             .buffer_size(2900)
             .connect()
             .map_err(|e| e.to_string())?;
-        socket.send_auth(&self.password,random_id as usize)?;
+        socket.send_auth(&self.password, random_id as usize)?;
         let ans = socket.receive_packet()?;
-        let ans_ = ReceivedPacketList::new( ans.as_slice())?
-            .into_packet_without_size()?;
+        let ans_ = ReceivedPacketList::new(ans.as_slice())?.into_packet_without_size()?;
         // dbg!(&ans_);
         return if PacketWithoutSize::check_auth(random_id, &ans_[0]) {
             Ok(true)
-        } else { Err("Auth failed".to_string()) }
-
+        } else {
+            Err("Auth failed".to_string())
+        };
     }
-    pub fn exec(&mut self, command: String){
-        self.last_id +=1 ;
-        let mut socket =  ConnectManager::builder()
+    pub fn exec(&mut self, command: String) {
+        self.last_id += 1;
+        let mut socket = ConnectManager::builder()
             .host(self.host.clone())
             .port(self.port)
             .max_timeout(self.timeout)
             .buffer_size(2900)
             .connect()
-            .map_err(|e| e.to_string()).unwrap();
-        socket.send_auth(&self.password, self.last_id as usize).unwrap();
+            .map_err(|e| e.to_string())
+            .unwrap();
+        socket
+            .send_auth(&self.password, self.last_id as usize)
+            .unwrap();
         let ans = socket.receive_packet().unwrap();
-        let ans_ = ReceivedPacketList::new( ans.as_slice()).unwrap()
-            .into_packet_without_size().unwrap();
-        if ! PacketWithoutSize::check_auth(self.last_id, &ans_[0]){
+        let ans_ = ReceivedPacketList::new(ans.as_slice())
+            .unwrap()
+            .into_packet_without_size()
+            .unwrap();
+        if !PacketWithoutSize::check_auth(self.last_id, &ans_[0]) {
             panic!("Auth failed");
         }
-        socket.send_command(&command, self.last_id as usize).unwrap();
+        socket
+            .send_command(&command, self.last_id as usize)
+            .unwrap();
         let ans = socket.receive_packet().unwrap();
-        let ans_ = ReceivedPacketList::new( ans.as_slice()).unwrap()
-            .into_packet_without_size().unwrap();
+        let ans_ = ReceivedPacketList::new(ans.as_slice())
+            .unwrap()
+            .into_packet_without_size()
+            .unwrap();
         socket.shutdown().unwrap();
-        dbg!(&ans_);
 
+        let feedback = PacketWithoutSize::get_payload(&ans_[0]).unwrap();
+        dbg!(feedback);
     }
 }
 
-pub struct RconBuilder{
+pub struct RconBuilder {
     host: Option<String>,
     port: Option<u16>,
     password: Option<String>,
     timeout: Option<u64>,
     last_id: Option<i32>,
 }
-impl RconBuilder{
+impl RconBuilder {
     pub fn host(mut self, host: String) -> Self {
         self.host = Some(host);
         self
@@ -114,21 +123,21 @@ impl RconBuilder{
         self.timeout = Some(timeout);
         self
     }
-    pub fn build(self)->Result<Rcon, String>{
+    pub fn build(self) -> Result<Rcon, String> {
         let host = self.host.ok_or("host is None".to_string())?;
         let port = self.port.ok_or("port is None".to_string())?;
         let password = self.password.ok_or("password is None".to_string())?;
         let timeout = self.timeout.ok_or("timeout is None".to_string())?;
-        let new_rcon = Rcon{
+        let new_rcon = Rcon {
             host,
             port,
             password,
             timeout,
-            last_id:0,
+            last_id: 0,
         };
-        if new_rcon.auth().is_err(){
+        if new_rcon.auth().is_err() {
             return Err("Auth failed".to_string());
         }
-       Ok(new_rcon)
+        Ok(new_rcon)
     }
 }

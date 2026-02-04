@@ -54,8 +54,16 @@ impl PacketWithoutSize {
             terminator: Some('\0'),
         }
     }
-    pub fn check_auth(id:i32,ans:&Self)->bool{
-        ans.packet_type==PacketType::AuthResponseAndExecCommand && ans.id==id
+    pub fn check_auth(id: i32, ans: &Self) -> bool {
+        ans.packet_type == PacketType::AuthResponseAndExecCommand && ans.id == id
+    }
+    pub fn get_payload(&self) -> Option<String> {
+        let payload = self.payload.clone();
+        return if payload.len() == 1 {
+            return Some(" ".to_string());
+        } else {
+            Some(payload[..payload.len() - 1].to_string())
+        };
     }
 }
 

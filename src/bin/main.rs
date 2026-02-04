@@ -27,11 +27,13 @@ use rcon2mc::connect_manager::ConnectManager;
 use rcon2mc::packet::ReceivedPacketList;
 use rcon2mc::rcon::Rcon;
 fn main() {
+    let host = std::env::var("RCON_HOST");
+    let password = std::env::var("RCON_PASSWORD");
     let a = Rcon::builder()
-        .host("1".to_string())
+        .host(host.unwrap())
         .port(25575)
         .timeout(3)
-        .password("1".to_string())
+        .password(password.unwrap())
         .build();
     a.unwrap().exec("list".to_string());
 }
