@@ -32,18 +32,14 @@ use std::time::Duration;
 
 #[derive(Debug)]
 pub struct ConnectManager {
-    pub max_timeout: u64,
     pub buffer_size: usize,
     stream: TcpStream,
-    host: String,
-    port: u16,
 }
 impl ConnectManager {
     pub fn builder() -> ConnectManagerBuilder {
         ConnectManagerBuilder {
             max_timeout: Some(2),
             buffer_size: Some(2920),
-            stream: None,
             host: None,
             port: None,
         }
@@ -87,10 +83,24 @@ impl ConnectManager {
                 Ok(n) => {
                     total_read += n;
                     raw_data.extend_from_slice(&buffer[..n]);
+                    if total_read < 4 {
+                        continue;
+                    }
+                    let size = raw_data[0..4]
+                        .try_into()
+                        .ok()
+                        .map(i32::from_le_bytes)
+                        .expect("cannot convert raw bytes to size");
+                    if total_read >= (size + 4) as usize {
+                        break;
+                    }
                 }
                 Err(e) => match e {
                     ref e if e.kind() == std::io::ErrorKind::Interrupted => {
                         continue;
+                    }
+                    ref e if e.kind() == std::io::ErrorKind::WouldBlock => {
+                        break;
                     }
                     _ => return Err(RconConnectionError::StreamReadingError(e.to_string()))?,
                 },
@@ -110,9 +120,8 @@ impl ConnectManager {
 pub struct ConnectManagerBuilder {
     max_timeout: Option<u64>,
     buffer_size: Option<usize>,
-    stream: Option<TcpStream>,
     host: Option<String>,
-    port: Option<u16>,
+    port: Option<u32>,
 }
 impl ConnectManagerBuilder {
     pub fn max_timeout(mut self, max_timeout: u64) -> Self {
@@ -127,7 +136,7 @@ impl ConnectManagerBuilder {
         self.host = Some(host);
         self
     }
-    pub fn port(mut self, port: u16) -> Self {
+    pub fn port(mut self, port: u32) -> Self {
         self.port = Some(port);
         self
     }
@@ -167,19 +176,10 @@ impl ConnectManagerBuilder {
         }
 
         Ok(ConnectManager {
-            max_timeout: self
-                .max_timeout
-                .ok_or_else(|| RconConnectionError::MissingField("max_timeout"))?,
             buffer_size: self
                 .buffer_size
                 .ok_or_else(|| RconConnectionError::MissingField("buffer_size"))?,
             stream: tcp_stream,
-            host: self
-                .host
-                .ok_or_else(|| RconConnectionError::MissingField("host"))?,
-            port: self
-                .port
-                .ok_or_else(|| RconConnectionError::MissingField("port"))?,
         })
     }
 }

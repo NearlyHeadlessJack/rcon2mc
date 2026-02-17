@@ -30,10 +30,11 @@ use rand::Rng;
 #[derive(Debug)]
 pub struct Rcon {
     host: String,
-    port: u16,
+    port: u32,
     password: String,
     timeout: u64,
     last_id: i32,
+    buffer_size: usize,
 }
 impl Rcon {
     pub fn builder() -> RconBuilder {
@@ -42,21 +43,40 @@ impl Rcon {
             port: Some(25575),
             password: None,
             timeout: Some(2),
-            last_id: Some(0),
+            buffer_size: Some(2900),
         }
     }
     /// Verify whether the information can pass authentication through the rcon server.
     fn auth(&self) -> Result<bool, RconError> {
         let random_id: i32 = rand::rng().random_range(1..=1000);
-        let mut socket = create_rcon_connection(self.host.clone(), self.port, self.timeout, 2900)?;
+        let mut socket =
+            create_rcon_connection(self.host.clone(), self.port, self.timeout, self.buffer_size)?;
         socket
             .send_auth(&self.password, random_id as usize)
             .map_err(|e| RconError::RconSendPacketError(e.to_string()))?;
         let response_list = parser_response(&mut socket)?;
-        // dbg!(&ans_);
+
+        if let Err(e) = socket.shutdown() {
+            Err(RconError::RconShutdownError(e.to_string()))?
+        }
         match PacketWithoutSize::check_auth(random_id, &response_list[0]) {
             Err(e) => match e {
-                RconError::AuthenticationFailed => Ok(false),
+                RconError::IncorrectPasswordError => Ok(false),
+                _ => Err(RconError::AuthenticationError(e.to_string()))?,
+            },
+            _ => Ok(true),
+        }
+    }
+    fn auth_for_exec(&self, socket: &mut ConnectManager) -> Result<bool, RconError> {
+        let random_id: i32 = rand::rng().random_range(1..=1000);
+        socket
+            .send_auth(&self.password, random_id as usize)
+            .map_err(|e| RconError::RconSendPacketError(e.to_string()))?;
+        let response_list = parser_response(socket)?;
+
+        match PacketWithoutSize::check_auth(random_id, &response_list[0]) {
+            Err(e) => match e {
+                RconError::IncorrectPasswordError => Ok(false),
                 _ => Err(RconError::AuthenticationError(e.to_string()))?,
             },
             _ => Ok(true),
@@ -64,10 +84,11 @@ impl Rcon {
     }
     pub fn exec(&mut self, command: String) -> Result<String, RconError> {
         self.last_id += 1;
-        let mut socket = create_rcon_connection(self.host.clone(), self.port, self.timeout, 2900)?;
-        match self.auth() {
+        let mut socket =
+            create_rcon_connection(self.host.clone(), self.port, self.timeout, self.buffer_size)?;
+        match self.auth_for_exec(&mut socket) {
             Ok(true) => {}
-            Ok(false) => Err(RconError::AuthenticationFailed)?,
+            Ok(false) => Err(RconError::IncorrectPasswordError)?,
             Err(e) => Err(e)?,
         }
 
@@ -85,23 +106,27 @@ impl Rcon {
 
         let feedback = PacketWithoutSize::get_payload(&response_list[0])
             .ok_or_else(|| RconError::FeedbackIsNone)?;
+        let feedback_id = response_list[0].get_id();
+        if feedback_id != self.last_id {
+            Err(RconError::MismatchedResponsePacketID)?
+        }
         Ok(feedback)
     }
 }
 
 pub struct RconBuilder {
     host: Option<String>,
-    port: Option<u16>,
+    port: Option<u32>,
     password: Option<String>,
     timeout: Option<u64>,
-    last_id: Option<i32>,
+    buffer_size: Option<usize>,
 }
 impl RconBuilder {
     pub fn host(mut self, host: String) -> Self {
         self.host = Some(host);
         self
     }
-    pub fn port(mut self, port: u16) -> Self {
+    pub fn port(mut self, port: u32) -> Self {
         self.port = Some(port);
         self
     }
@@ -111,6 +136,10 @@ impl RconBuilder {
     }
     pub fn timeout(mut self, timeout: u64) -> Self {
         self.timeout = Some(timeout);
+        self
+    }
+    pub fn buffer_size(mut self, buffer_size: usize) -> Self {
+        self.buffer_size = Some(buffer_size);
         self
     }
     pub fn build(self) -> Result<Rcon, RconError> {
@@ -128,17 +157,20 @@ impl RconBuilder {
             password,
             timeout,
             last_id: 0,
+            buffer_size: self.buffer_size.unwrap_or(2900),
         };
-        if new_rcon.auth().is_err() {
-            Err(RconError::AuthenticationFailed)?
+
+        match new_rcon.auth() {
+            Ok(true) => Ok(new_rcon),
+            Ok(false) => Err(RconError::IncorrectPasswordError)?,
+            Err(e) => Err(RconError::AuthenticationError(e.to_string()))?,
         }
-        Ok(new_rcon)
     }
 }
 
 fn create_rcon_connection(
     host: String,
-    port: u16,
+    port: u32,
     max_timeout: u64,
     buff_size: usize,
 ) -> Result<ConnectManager, RconError> {

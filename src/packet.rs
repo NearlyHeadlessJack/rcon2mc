@@ -61,7 +61,7 @@ impl PacketWithoutSize {
         if ans.packet_type == PacketType::AuthResponseOrExecCommand && ans.id == id {
             Ok(())
         } else if ans.id == -1 {
-            Err(crate::error::RconError::AuthenticationFailed)
+            Err(crate::error::RconError::IncorrectPasswordError)
         } else {
             Err(crate::error::RconError::AuthenticationError(
                 "mismatched packet id".to_string(),
@@ -77,6 +77,9 @@ impl PacketWithoutSize {
         } else {
             None
         }
+    }
+    pub fn get_id(&self) -> i32 {
+        self.id
     }
 }
 

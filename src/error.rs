@@ -63,8 +63,8 @@ pub enum RconConnectionError {
 pub enum RconError {
     #[error("Missing filed {0} when create a Rcon connection")]
     MissingField(&'static str),
-    #[error("Authentication Failed")]
-    AuthenticationFailed,
+    #[error("Authentication Failed: Incorrect Password")]
+    IncorrectPasswordError,
     #[error("Error in Authentication:{0}")]
     AuthenticationError(String),
     #[error("Rcon connection error: {0}")]
@@ -77,4 +77,8 @@ pub enum RconError {
     FeedbackIsNone,
     #[error("Rcon connection shutdown error: {0}")]
     RconShutdownError(String),
+    #[error("Mismatched Response Packet ID")]
+    MismatchedResponsePacketID,
+    #[error("Port number is out of range")]
+    PortOutOfRangeError,
 }

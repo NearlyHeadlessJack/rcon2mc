@@ -22,18 +22,16 @@
  * // Author: Jack Wang <wang@rjack.cn>
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
-use rcon2mc::packet::{PacketWithoutSize, PacketInBytes};
-use rcon2mc::connect::ConnectManager;
-use rcon2mc::packet::ReceivedBPacketList;
-use rcon2mc::rcon::Rcon;
+use rcon2mc::rcon_client::RconClient;
 fn main() {
-    let host = std::env::var("RCON_HOST");
-    let password = std::env::var("RCON_PASSWORD");
-    let a = Rcon::builder()
-        .host(host.unwrap())
+    println!("Hello, world!");
+    let rcon = RconClient::builder()
+        .host("192.168.5.28".to_string())
         .port(25575)
-        .timeout(3)
-        .password(password.unwrap())
+        .password("password".to_string())
         .build();
-    a.unwrap().exec("list".to_string());
+
+    let feedback = rcon.unwrap().send("list".to_string()).unwrap();
+    println!("{}", feedback);
+
 }
