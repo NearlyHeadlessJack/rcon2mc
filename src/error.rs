@@ -58,3 +58,23 @@ pub enum RconConnectionError {
     #[error("Stream closing error: {0}")]
     StreamClosingError(String),
 }
+
+#[derive(Error, Debug)]
+pub enum RconError {
+    #[error("Missing filed {0} when create a Rcon connection")]
+    MissingField(&'static str),
+    #[error("Authentication Failed")]
+    AuthenticationFailed,
+    #[error("Error in Authentication:{0}")]
+    AuthenticationError(String),
+    #[error("Rcon connection error: {0}")]
+    RconConnectionError(String),
+    #[error("Rcon send packet error: {0}")]
+    RconSendPacketError(String),
+    #[error("Rcon receive packet error: {0}")]
+    RconReceivePacketError(String),
+    #[error("Feedback information is None")]
+    FeedbackIsNone,
+    #[error("Rcon connection shutdown error: {0}")]
+    RconShutdownError(String),
+}

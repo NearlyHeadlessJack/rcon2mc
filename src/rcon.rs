@@ -22,9 +22,11 @@
  * // Author: Jack Wang <wang@rjack.cn>
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
-use crate::connect_manager::ConnectManager;
-use crate::packet::{PacketInBytes, PacketType, PacketWithoutSize, ReceivedPacketList};
+use crate::connect::ConnectManager;
+use crate::error::RconError;
+use crate::packet::{PacketWithoutSize, ReceivedBPacketList};
 use rand::Rng;
+
 #[derive(Debug)]
 pub struct Rcon {
     host: String,
@@ -39,63 +41,51 @@ impl Rcon {
             host: None,
             port: Some(25575),
             password: None,
-            timeout: Some(3),
+            timeout: Some(2),
             last_id: Some(0),
         }
     }
-
-    fn auth(&self) -> Result<bool, String> {
+    /// Verify whether the information can pass authentication through the rcon server.
+    fn auth(&self) -> Result<bool, RconError> {
         let random_id: i32 = rand::rng().random_range(1..=1000);
-        let mut socket = ConnectManager::builder()
-            .host(self.host.clone())
-            .port(self.port)
-            .max_timeout(self.timeout)
-            .buffer_size(2900)
-            .connect()
-            .map_err(|e| e.to_string())?;
-        socket.send_auth(&self.password, random_id as usize)?;
-        let ans = socket.receive_packet()?;
-        let ans_ = ReceivedPacketList::new(ans.as_slice())?.into_packet_without_size()?;
+        let mut socket = create_rcon_connection(self.host.clone(), self.port, self.timeout, 2900)?;
+        socket
+            .send_auth(&self.password, random_id as usize)
+            .map_err(|e| RconError::RconSendPacketError(e.to_string()))?;
+        let response_list = parser_response(&mut socket)?;
         // dbg!(&ans_);
-        return if PacketWithoutSize::check_auth(random_id, &ans_[0]) {
-            Ok(true)
-        } else {
-            Err("Auth failed".to_string())
-        };
-    }
-    pub fn exec(&mut self, command: String) {
-        self.last_id += 1;
-        let mut socket = ConnectManager::builder()
-            .host(self.host.clone())
-            .port(self.port)
-            .max_timeout(self.timeout)
-            .buffer_size(2900)
-            .connect()
-            .map_err(|e| e.to_string())
-            .unwrap();
-        socket
-            .send_auth(&self.password, self.last_id as usize)
-            .unwrap();
-        let ans = socket.receive_packet().unwrap();
-        let ans_ = ReceivedPacketList::new(ans.as_slice())
-            .unwrap()
-            .into_packet_without_size()
-            .unwrap();
-        if !PacketWithoutSize::check_auth(self.last_id, &ans_[0]) {
-            panic!("Auth failed");
+        match PacketWithoutSize::check_auth(random_id, &response_list[0]) {
+            Err(e) => match e {
+                RconError::AuthenticationFailed => Ok(false),
+                _ => Err(RconError::AuthenticationError(e.to_string()))?,
+            },
+            _ => Ok(true),
         }
-        socket
-            .send_command(&command, self.last_id as usize)
-            .unwrap();
-        let ans = socket.receive_packet().unwrap();
-        let ans_ = ReceivedPacketList::new(ans.as_slice())
-            .unwrap()
-            .into_packet_without_size()
-            .unwrap();
-        socket.shutdown().unwrap();
+    }
+    pub fn exec(&mut self, command: String) -> Result<String, RconError> {
+        self.last_id += 1;
+        let mut socket = create_rcon_connection(self.host.clone(), self.port, self.timeout, 2900)?;
+        match self.auth() {
+            Ok(true) => {}
+            Ok(false) => Err(RconError::AuthenticationFailed)?,
+            Err(e) => Err(e)?,
+        }
 
-        let feedback = PacketWithoutSize::get_payload(&ans_[0]).unwrap();
-        dbg!(feedback);
+        // b: in bytes (u8 list)
+        // raw: not segmented
+        // list: segmented
+
+        if let Err(e) = socket.send_command(&command, self.last_id as usize) {
+            Err(RconError::RconSendPacketError(e.to_string()))?
+        }
+        let response_list = parser_response(&mut socket)?;
+        if let Err(e) = socket.shutdown() {
+            Err(RconError::RconShutdownError(e.to_string()))?
+        }
+
+        let feedback = PacketWithoutSize::get_payload(&response_list[0])
+            .ok_or_else(|| RconError::FeedbackIsNone)?;
+        Ok(feedback)
     }
 }
 
@@ -123,11 +113,15 @@ impl RconBuilder {
         self.timeout = Some(timeout);
         self
     }
-    pub fn build(self) -> Result<Rcon, String> {
-        let host = self.host.ok_or("host is None".to_string())?;
-        let port = self.port.ok_or("port is None".to_string())?;
-        let password = self.password.ok_or("password is None".to_string())?;
-        let timeout = self.timeout.ok_or("timeout is None".to_string())?;
+    pub fn build(self) -> Result<Rcon, RconError> {
+        let host = self.host.ok_or_else(|| RconError::MissingField("host"))?;
+        let port = self.port.ok_or_else(|| RconError::MissingField("port"))?;
+        let password = self
+            .password
+            .ok_or_else(|| RconError::MissingField("password"))?;
+        let timeout = self
+            .timeout
+            .ok_or_else(|| RconError::MissingField("timeout"))?;
         let new_rcon = Rcon {
             host,
             port,
@@ -136,8 +130,43 @@ impl RconBuilder {
             last_id: 0,
         };
         if new_rcon.auth().is_err() {
-            return Err("Auth failed".to_string());
+            Err(RconError::AuthenticationFailed)?
         }
         Ok(new_rcon)
     }
+}
+
+fn create_rcon_connection(
+    host: String,
+    port: u16,
+    max_timeout: u64,
+    buff_size: usize,
+) -> Result<ConnectManager, RconError> {
+    let socket = ConnectManager::builder()
+        .host(host)
+        .port(port)
+        .max_timeout(max_timeout)
+        .buffer_size(buff_size)
+        .connect();
+    if let Err(e) = socket {
+        Err(RconError::RconConnectionError(e.to_string()))?
+    } else {
+        Ok(socket.unwrap())
+    }
+}
+
+fn parser_response(socket: &mut ConnectManager) -> Result<Vec<PacketWithoutSize>, RconError> {
+    let response_b_raw = match socket.receive_packet() {
+        Ok(response) => response,
+        Err(e) => Err(RconError::RconSendPacketError(e.to_string()))?,
+    };
+
+    let response_list = match ReceivedBPacketList::new(response_b_raw.as_slice()) {
+        Ok(response_b_list) => match response_b_list.into_packet_without_size() {
+            Ok(response_list) => response_list,
+            Err(e) => Err(RconError::RconReceivePacketError(e.to_string()))?,
+        },
+        Err(e) => Err(RconError::RconReceivePacketError(e.to_string()))?,
+    };
+    Ok(response_list)
 }

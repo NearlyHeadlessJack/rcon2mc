@@ -57,15 +57,25 @@ impl PacketWithoutSize {
             terminator: Some('\0'),
         }
     }
-    pub fn check_auth(id: i32, ans: &Self) -> bool {
-        ans.packet_type == PacketType::AuthResponseOrExecCommand && ans.id == id
+    pub fn check_auth(id: i32, ans: &Self) -> Result<(), crate::error::RconError> {
+        if ans.packet_type == PacketType::AuthResponseOrExecCommand && ans.id == id {
+            Ok(())
+        } else if ans.id == -1 {
+            Err(crate::error::RconError::AuthenticationFailed)
+        } else {
+            Err(crate::error::RconError::AuthenticationError(
+                "mismatched packet id".to_string(),
+            ))
+        }
     }
     pub fn get_payload(&self) -> Option<String> {
         let payload = self.payload.clone();
         if payload.len() == 1 {
             Some(" ".to_string())
-        } else {
+        } else if payload.len() > 1 {
             Some(payload[..payload.len() - 1].to_string())
+        } else {
+            None
         }
     }
 }
@@ -203,11 +213,10 @@ pub struct ReceivedBPacketList {
 }
 impl ReceivedBPacketList {
     /// Put data in buffer here
-    pub fn new(raw_data: &[u8]) -> Result<ReceivedBPacketList, Box<dyn Error>> {
-        let packets = ReceivedBPacketList::slicer(raw_data).expect("cannot slice packets");
+    pub fn new(raw_data: &[u8]) -> Result<ReceivedBPacketList, BPacketConverterError> {
+        let packets = ReceivedBPacketList::slicer(raw_data)?;
         let length = packets.len();
-        let packet_type_list =
-            ReceivedBPacketList::classifier(&packets).expect("cannot read packets types");
+        let packet_type_list = ReceivedBPacketList::classifier(&packets)?;
 
         Ok(Self {
             length,
@@ -217,7 +226,7 @@ impl ReceivedBPacketList {
     }
 
     // size filed is not used
-    fn slicer(raw_data: &[u8]) -> Result<Vec<Vec<u8>>, Box<dyn Error>> {
+    fn slicer(raw_data: &[u8]) -> Result<Vec<Vec<u8>>, BPacketConverterError> {
         const TERMINATOR_FLAG: u8 = 0x00;
         let mut packets_list: Vec<Vec<u8>> = Vec::new();
         let mut last_idx = 12usize;
@@ -264,7 +273,7 @@ impl ReceivedBPacketList {
     }
 
     // size field is used, in case of segments
-    fn slicer_using_size(raw_data: &[u8]) -> Result<Vec<Vec<u8>>, Box<dyn Error>> {
+    fn slicer_using_size(raw_data: &[u8]) -> Result<Vec<Vec<u8>>, BPacketConverterError> {
         let mut packets_list: Vec<Vec<u8>> = Vec::new();
         let mut counter = 0;
         let mut last_idx = 0usize;
@@ -305,7 +314,7 @@ impl ReceivedBPacketList {
         }
         Ok(packets_list)
     }
-    fn classifier(packets: &Vec<Vec<u8>>) -> Result<Vec<PacketType>, Box<dyn Error>> {
+    fn classifier(packets: &Vec<Vec<u8>>) -> Result<Vec<PacketType>, BPacketConverterError> {
         let mut packet_type_list: Vec<PacketType> = vec![];
         for packet in packets.iter() {
             let packet_type = packet[8..12]
@@ -332,7 +341,7 @@ impl ReceivedBPacketList {
     }
 
     /// Convert raw data from buffer into `PacketWithoutSize`
-    pub fn into_packet_without_size(self) -> Result<Vec<PacketWithoutSize>, Box<dyn Error>> {
+    pub fn into_packet_without_size(self) -> Result<Vec<PacketWithoutSize>, BPacketConverterError> {
         // let mut rest_length = self.length;
         let mut id_list: Vec<i32> = vec![];
         let type_list: Vec<PacketType> = self.packet_type_list;
@@ -369,20 +378,24 @@ impl ReceivedBPacketList {
                 .payload(payload_list[idx].clone())
                 .unwrap()
                 .terminator(Some('\0'))
-                .build()?;
-            packet_result_list.push(new_packet);
+                .build();
+            if let Err(e) = new_packet {
+                Err(BPacketConverterError::InvalidPacket(e.to_string()))?;
+            } else {
+                packet_result_list.push(new_packet.unwrap());
+            }
         }
         Ok(packet_result_list)
     }
 }
 
 #[cfg(debug_assertions)]
-pub fn test_slicer(raw_data: &[u8]) -> Result<Vec<Vec<u8>>, Box<dyn Error>> {
+pub fn test_slicer(raw_data: &[u8]) -> Result<Vec<Vec<u8>>, BPacketConverterError> {
     ReceivedBPacketList::slicer(raw_data)
 }
 
 #[cfg(debug_assertions)]
-pub fn test_classifier(packets: &Vec<Vec<u8>>) -> Result<Vec<PacketType>, Box<dyn Error>> {
+pub fn test_classifier(packets: &Vec<Vec<u8>>) -> Result<Vec<PacketType>, BPacketConverterError> {
     ReceivedBPacketList::classifier(packets)
 }
 
