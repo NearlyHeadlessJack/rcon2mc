@@ -22,13 +22,14 @@
  * // Author: Jack Wang <wang@rjack.cn>
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
-use crate::packet::{
-    PacketBytes, PacketInBytes, PacketType, PacketWithoutSize, ReceivedPacketList,
-};
+use crate::error::RconConnectionError;
+use crate::packet::{PacketInBytes, PacketType, PacketWithoutSize};
+use std::error::Error;
 use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::net::{SocketAddr, ToSocketAddrs};
 use std::time::Duration;
+
 #[derive(Debug)]
 pub struct ConnectManager {
     pub max_timeout: u64,
@@ -40,80 +41,68 @@ pub struct ConnectManager {
 impl ConnectManager {
     pub fn builder() -> ConnectManagerBuilder {
         ConnectManagerBuilder {
-            max_timeout: Some(5),
+            max_timeout: Some(2),
             buffer_size: Some(2920),
             stream: None,
             host: None,
             port: None,
         }
     }
-    pub fn send_auth(&mut self, password: &String, id: usize) -> Result<(), &'static str> {
-        let packet = PacketWithoutSize::builder()
-            .id(id as i32)
-            .packet_type(PacketType::Auth)
-            .payload(password.clone())?
-            .terminator(Some('\0'))
-            .build()?;
+    pub fn send_auth(&mut self, password: &String, id: usize) -> Result<(), Box<dyn Error>> {
+        let packet = create_packet(id, PacketType::Auth, password)?;
+
         let packet_to_send = PacketInBytes::convert_to_bytes(&packet)?
             .get_packet()
             .clone();
-        self.stream
-            .write_all(packet_to_send.as_slice())
-            .expect("Send fail");
-        Ok(())
+
+        write_stream(&mut self.stream, packet_to_send)
     }
-    pub fn send_command(&mut self, command: &String, id: usize) -> Result<(), &'static str> {
-        let packet = PacketWithoutSize::builder()
-            .id(id as i32)
-            .packet_type(PacketType::AuthResponseAndExecCommand)
-            .payload(command.clone())?
-            .terminator(Some('\0'))
-            .build()?;
+    pub fn send_command(&mut self, command: &String, id: usize) -> Result<(), Box<dyn Error>> {
+        let packet = create_packet(id, PacketType::AuthResponseOrExecCommand, command)?;
+
         let packet_to_send = PacketInBytes::convert_to_bytes(&packet)?
             .get_packet()
             .clone();
-        self.stream
-            .write_all(packet_to_send.as_slice())
-            .expect("Send fail");
-        Ok(())
+
+        write_stream(&mut self.stream, packet_to_send)
     }
 
-    pub fn receive_packet(&mut self) -> Result<Vec<u8>, &'static str> {
+    pub fn receive_packet(&mut self) -> Result<Vec<u8>, RconConnectionError> {
         let mut buffer: Vec<u8> = vec![0; self.buffer_size];
         let mut raw_data: Vec<u8> = Vec::new();
         let mut total_read = 0;
-        let start_time = std::time::Instant::now();
 
         loop {
-            if start_time.elapsed().as_secs() > self.max_timeout {
-                return Err("Timeout");
-            }
             match self.stream.read(&mut buffer) {
                 Ok(0) => {
                     if total_read == 0 {
-                        return Err("Connection closed by peer");
+                        return Err(RconConnectionError::StreamReadingError(
+                            "Stream read error".to_string(),
+                        ))?;
                     } else {
-                        // 已读取部分数据
+                        // end reading
                         break;
                     }
                 }
                 Ok(n) => {
                     total_read += n;
                     raw_data.extend_from_slice(&buffer[..n]);
-                    if n < buffer.len() {
-                        break;
+                }
+                Err(e) => match e {
+                    ref e if e.kind() == std::io::ErrorKind::Interrupted => {
+                        continue;
                     }
-                }
-                Err(e) => {
-                    return Err("err when reading from server");
-                }
+                    _ => return Err(RconConnectionError::StreamReadingError(e.to_string()))?,
+                },
             }
         }
 
         Ok(raw_data)
     }
-    pub fn shutdown(&mut self) -> Result<(), &'static str> {
-        self.stream.shutdown(std::net::Shutdown::Both).unwrap();
+    pub fn shutdown(&mut self) -> Result<(), RconConnectionError> {
+        if let Err(e) = self.stream.shutdown(std::net::Shutdown::Both) {
+            Err(RconConnectionError::StreamClosingError(e.to_string()))?
+        }
         Ok(())
     }
 }
@@ -142,17 +131,17 @@ impl ConnectManagerBuilder {
         self.port = Some(port);
         self
     }
-    pub fn connect(mut self) -> Result<ConnectManager, &'static str> {
+    pub fn connect(self) -> Result<ConnectManager, RconConnectionError> {
         let hostname = self.host.clone().unwrap();
         let port = self.port.unwrap();
         let start_time = std::time::Instant::now();
-        let mut tcp_stream: TcpStream;
+        let tcp_stream: TcpStream;
         let addr = format!("{}:{}", hostname, port);
         let socket_addrs: Vec<SocketAddr> = addr.to_socket_addrs().unwrap().collect();
 
         loop {
             if start_time.elapsed().as_secs() > self.max_timeout.unwrap() {
-                return Err("Timeout");
+                Err(RconConnectionError::TCPConnectionTimeoutError)?
             }
 
             match TcpStream::connect_timeout(
@@ -163,26 +152,56 @@ impl ConnectManagerBuilder {
                     tcp_stream = stream;
                     break;
                 }
-                Err(e) => {
-                    dbg!(e);
-                    return Err("Err");
-                }
+                Err(e) => Err(RconConnectionError::TCPConnectionError(e.to_string()))?,
             }
         }
-        tcp_stream
-            .set_read_timeout(Some(Duration::from_secs(self.max_timeout.unwrap())))
-            .map_err(|_| "Failed to set read timeout")?;
-        tcp_stream
-            .set_write_timeout(Some(Duration::from_secs(self.max_timeout.unwrap())))
-            .map_err(|_| "Failed to set write timeout")?;
+        if let Err(e) =
+            tcp_stream.set_read_timeout(Some(Duration::from_secs(self.max_timeout.unwrap())))
+        {
+            Err(RconConnectionError::TCPConnectionError(e.to_string()))?
+        }
+        if let Err(e) =
+            tcp_stream.set_write_timeout(Some(Duration::from_secs(self.max_timeout.unwrap())))
+        {
+            Err(RconConnectionError::TCPConnectionError(e.to_string()))?
+        }
 
         Ok(ConnectManager {
-            max_timeout: self.max_timeout.ok_or("max_timeout未设置")?,
-            buffer_size: self.buffer_size.ok_or("buffer_size未设置")?,
+            max_timeout: self
+                .max_timeout
+                .ok_or_else(|| RconConnectionError::MissingField("max_timeout"))?,
+            buffer_size: self
+                .buffer_size
+                .ok_or_else(|| RconConnectionError::MissingField("buffer_size"))?,
             stream: tcp_stream,
-            host: self.host.ok_or("host未设置")?,
-            port: self.port.ok_or("port未设置")?,
+            host: self
+                .host
+                .ok_or_else(|| RconConnectionError::MissingField("host"))?,
+            port: self
+                .port
+                .ok_or_else(|| RconConnectionError::MissingField("port"))?,
         })
+    }
+}
+
+fn create_packet(
+    id: usize,
+    packet_type: PacketType,
+    payload: &String,
+) -> Result<PacketWithoutSize, Box<dyn Error>> {
+    let packet = PacketWithoutSize::builder()
+        .id(id as i32)
+        .packet_type(packet_type)
+        .payload(payload.clone())?
+        .terminator(Some('\0'))
+        .build()?;
+    Ok(packet)
+}
+
+fn write_stream(stream: &mut TcpStream, packet_to_send: Vec<u8>) -> Result<(), Box<dyn Error>> {
+    match stream.write_all(packet_to_send.as_slice()) {
+        Err(e) => Err(RconConnectionError::StreamWritingError(e.to_string()))?,
+        Ok(_) => Ok(()),
     }
 }
 

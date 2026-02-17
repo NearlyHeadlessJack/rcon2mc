@@ -22,18 +22,39 @@
  * // Author: Jack Wang <wang@rjack.cn>
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
-use rcon2mc::packet::{PacketWithoutSize, PacketInBytes};
-use rcon2mc::connect::ConnectManager;
-use rcon2mc::packet::ReceivedBPacketList;
-use rcon2mc::rcon::Rcon;
-fn main() {
-    let host = std::env::var("RCON_HOST");
-    let password = std::env::var("RCON_PASSWORD");
-    let a = Rcon::builder()
-        .host(host.unwrap())
-        .port(25575)
-        .timeout(3)
-        .password(password.unwrap())
-        .build();
-    a.unwrap().exec("list".to_string());
+
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum CreatePacketError {
+    #[error("Input payload should not end with 0x00")]
+    InputPayloadEndWithZero,
+    #[error("Input payload oversize")]
+    InputPayloadOversize,
+    #[error("Missing filed {0} when creating packet")]
+    MissingField(&'static str),
+}
+
+#[derive(Error, Debug)]
+pub enum BPacketConverterError {
+    #[error("Invalid packet: {0}")]
+    InvalidPacket(String),
+    #[error("Segmenting Error: {0}")]
+    SegmentingError(String),
+}
+
+#[derive(Error, Debug)]
+pub enum RconConnectionError {
+    #[error("TCPConnection Timeout")]
+    TCPConnectionTimeoutError,
+    #[error("TCPConnection Error: {0}")]
+    TCPConnectionError(String),
+    #[error("Missing filed {0} when create TCP Stream")]
+    MissingField(&'static str),
+    #[error("Stream reading error: {0}")]
+    StreamReadingError(String),
+    #[error("Stream writing error: {0}")]
+    StreamWritingError(String),
+    #[error("Stream closing error: {0}")]
+    StreamClosingError(String),
 }

@@ -78,7 +78,7 @@ fn test_packet_classifer() {
         test_classifier(&test).unwrap(),
         vec![
             PacketType::Auth,
-            PacketType::AuthResponseAndExecCommand,
+            PacketType::AuthResponseOrExecCommand,
             PacketType::Response,
             PacketType::Invalid,
             PacketType::Invalid
