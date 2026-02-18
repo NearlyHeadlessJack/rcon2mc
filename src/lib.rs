@@ -23,7 +23,7 @@
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
 mod connect;
-mod error;
+pub mod error;
 mod packet;
 mod rcon;
 pub mod rcon_client;
