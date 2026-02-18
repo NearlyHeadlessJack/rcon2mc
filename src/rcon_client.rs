@@ -36,6 +36,18 @@ pub struct PlayerList {
     pub player_list: Vec<String>,
 }
 
+#[derive(Debug, PartialEq)]
+pub enum TargetStatus {
+    Success(TargetStatusSuccess),
+    NotFound,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum TargetStatusSuccess {
+    Success,
+    Duplicated,
+}
+
 /// A client for communicating with an RCON (Remote Console) server.
 ///
 /// This struct represents an authenticated connection to an RCON server.

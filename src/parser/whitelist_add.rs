@@ -22,6 +22,32 @@
  * // Author: Jack Wang <wang@rjack.cn>
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
-mod utils;
-pub mod whitelist;
-pub(crate) mod whitelist_add;
+
+use crate::error::RconError;
+use crate::parser::utils::check_invalid_command;
+use crate::parser::utils::StringProcessor;
+use crate::rcon_client::RconClient;
+use crate::rcon_client::{TargetStatus, TargetStatusSuccess};
+
+pub fn whitelist_add(client: &mut RconClient, player: &str) -> Result<TargetStatus, RconError> {
+    let command = format!("whitelist add {}", player);
+
+    let mut feedback = client.send(command.to_string())?;
+    check_invalid_command(&feedback)?;
+    if feedback.contains("That player does not exist") {
+        return Ok(TargetStatus::NotFound);
+    }
+    if feedback.contains("Player is already whitelisted") {
+        return Ok(TargetStatus::Success(TargetStatusSuccess::Duplicated));
+    }
+    if feedback.contains("Added") {
+        return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
+    }
+    Err(RconError::UnknownParserError(
+        format!(
+            "Unknown error when adding player {} to the whitelist.",
+            player
+        )
+        .to_string(),
+    ))
+}

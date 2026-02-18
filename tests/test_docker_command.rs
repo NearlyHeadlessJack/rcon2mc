@@ -22,9 +22,12 @@
  * // Author: Jack Wang <wang@rjack.cn>
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
+use rcon2mc::error::RconError;
+use rcon2mc::rcon_client::{TargetStatus, TargetStatusSuccess};
+
 mod utils;
 #[test]
-fn test_docker_command_whitelist() {
+fn test_docker_command_whitelist_none() {
     let Some(rcon) = utils::rcon::get_rcon() else {
         return;
     };
@@ -38,4 +41,61 @@ fn test_docker_command_whitelist() {
         .expect("whitelist command push fail");
 
     assert_eq!(feedback, None)
+}
+
+#[test]
+fn test_docker_command_whitelist_add_not_found() {
+    let Some(rcon) = utils::rcon::get_rcon() else {
+        return;
+    };
+    let Ok(rcon) = rcon else {
+        assert!(false);
+        return;
+    };
+    let feedback = rcon
+        .command()
+        .whitelist_add("NOFbieufwbe3i32fdASWATER99992f")
+        .expect("whitelist add command push fail");
+
+    assert_eq!(feedback, TargetStatus::NotFound)
+}
+
+#[test]
+fn test_docker_command_whitelist_add_success() {
+    let Some(rcon) = utils::rcon::get_rcon() else {
+        return;
+    };
+    let Ok(rcon) = rcon else {
+        assert!(false);
+        return;
+    };
+    let feedback = rcon
+        .command()
+        .whitelist_add("ASWATER")
+        .expect("whitelist add command push fail");
+
+    assert_eq!(
+        feedback,
+        TargetStatus::Success(TargetStatusSuccess::Success)
+    )
+}
+
+#[test]
+fn test_docker_command_whitelist_add_duplicated() {
+    let Some(rcon) = utils::rcon::get_rcon() else {
+        return;
+    };
+    let Ok(rcon) = rcon else {
+        assert!(false);
+        return;
+    };
+    let feedback = rcon
+        .command()
+        .whitelist_add("ASWATER")
+        .expect("whitelist add command push fail");
+
+    assert_eq!(
+        feedback,
+        TargetStatus::Success(TargetStatusSuccess::Duplicated)
+    )
 }
