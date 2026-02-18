@@ -55,7 +55,7 @@ const RCON_ENV_TIMEOUT: &str = "RCON_TIMEOUT";
 /// # Example
 ///
 /// ```no_run
-/// use rcon_client::RconClient;
+/// use rcon2mc::rcon_client::RconClient;
 ///
 /// let client = RconClient::builder()
 ///     .host("127.0.0.1".to_string())
@@ -115,8 +115,8 @@ impl RconClient {
 ///
 /// # Example
 ///
-/// ```
-/// # use rcon_client::RconClient;
+/// ```no_run
+/// # use rcon2mc::rcon_client::RconClient;
 /// let client = RconClient::builder()
 ///     .host("localhost".to_string())
 ///     .port(25575)

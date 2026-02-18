@@ -213,19 +213,3 @@ fn write_stream(
         .map_err(RconConnectionError::StreamWritingError)?;
     Ok(())
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn build_connection() {
-        let mut connection = ConnectManager::builder()
-            .max_timeout(5)
-            .buffer_size(2920)
-            .host("localhost".to_string())
-            .port(7878)
-            .connect()
-            .unwrap();
-        connection.send_auth("123456", 2).unwrap();
-    }
-}

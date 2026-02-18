@@ -26,7 +26,6 @@
 use crate::error::{BPacketConverterError, CreatePacketError, RconError};
 
 const MAX_PAYLOAD_SIZE: usize = 1446;
-pub type PacketBytes = Vec<u8>;
 
 #[repr(i32)]
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -147,6 +146,7 @@ impl PacketWithoutSizeBuilder {
 
 /// Byte Vector of a Packet
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct PacketInBytes {
     /// The original packet ID
     id: i32,
@@ -203,6 +203,7 @@ impl PacketInBytes {
 
 /// Raw byte data will be segmented into multiple packets and classified.
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct ReceivedBPacketList {
     length: usize,
     /// For received packets,
@@ -316,16 +317,6 @@ impl ReceivedBPacketList {
         }
         Ok(packet_result_list)
     }
-}
-
-#[cfg(debug_assertions)]
-pub fn test_slicer(raw_data: &[u8]) -> Result<Vec<Vec<u8>>, BPacketConverterError> {
-    ReceivedBPacketList::slicer(raw_data)
-}
-
-#[cfg(debug_assertions)]
-pub fn test_classifier(packets: &[Vec<u8>]) -> Result<Vec<PacketType>, BPacketConverterError> {
-    ReceivedBPacketList::classifier(packets)
 }
 
 #[cfg(test)]
