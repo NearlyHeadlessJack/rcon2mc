@@ -27,8 +27,8 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum CreatePacketError {
-    #[error("Input payload should not end with 0x00")]
-    InputPayloadEndWithZero,
+    #[error("Input payload should not contain 0x00")]
+    InputPayloadContainsZero,
     #[error("Input payload oversize")]
     InputPayloadOversize,
     #[error("Missing field {0} when creating packet")]

@@ -8,7 +8,7 @@ repository = "https://github.com/NearlyHeadlessJack/rcon2mc"
 authors = ["NearlyHeadlessJack <wang@rjack.cn>"]
 keywords = ["rcon", "minecraft", "http", "cli"]
 readme = "README.md"
-exclude = ["target/", "examples/", "tests/",".github/"]
+exclude = ["target/", "examples/", "tests/",".github/","test/"]
 
 
 

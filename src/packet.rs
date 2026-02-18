@@ -111,7 +111,7 @@ impl PacketWithoutSizeBuilder {
     /// Length of `payload` should be less than **1446 Bytes**
     pub fn payload(mut self, payload: String) -> Result<Self, CreatePacketError> {
         if payload.contains('\0') {
-            return Err(CreatePacketError::InputPayloadEndWithZero);
+            return Err(CreatePacketError::InputPayloadContainsZero);
         }
         if payload.len() > MAX_PAYLOAD_SIZE {
             return Err(CreatePacketError::InputPayloadOversize);
