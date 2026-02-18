@@ -28,3 +28,4 @@ pub mod error;
 mod packet;
 mod rcon;
 pub mod rcon_client;
+mod parser;

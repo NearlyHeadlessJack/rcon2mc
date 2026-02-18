@@ -22,27 +22,4 @@
  * // Author: Jack Wang <wang@rjack.cn>
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
-use rcon2mc::rcon_client::RconClient;
-mod utils;
-#[test]
-fn test_docker_correct_password() {
-    let rcon = RconClient::builder()
-        .host(utils::consts::host())
-        .port(utils::consts::port())
-        .password(utils::consts::password())
-        .build();
-    assert!(rcon.is_ok())
-}
 
-#[test]
-fn test_docker_incorrect_password() {
-    use rcon2mc::error::RconError;
-    let mut password = utils::consts::password().clone();
-    password.pop();
-    let rcon = RconClient::builder()
-        .host(utils::consts::host())
-        .port(utils::consts::port())
-        .password(password)
-        .build();
-    assert!(matches!(rcon, Err(RconError::IncorrectPasswordError)))
-}

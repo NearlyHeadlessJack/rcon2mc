@@ -22,28 +22,29 @@
  * // Author: Jack Wang <wang@rjack.cn>
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
-use rcon2mc::rcon_client::RconClient;
-const CI_TEST_HOST : &str = "127.0.0.1";
-const TEST_PORT : u32 = 25575;
-const TEST_PASSWORD : &str = "password";
+const CI_TEST_HOST: &str = "127.0.0.1";
+const TEST_PORT: u32 = 25575;
+const TEST_PASSWORD: &str = "password";
 const LOCAL_TEST_HOST: &str = "192.168.5.28";
 
-pub(crate) fn host() ->String{
+pub(crate) fn host() -> String {
     return if is_github_ci() {
         CI_TEST_HOST.to_string()
-    } else { LOCAL_TEST_HOST.to_string() }
+    } else {
+        LOCAL_TEST_HOST.to_string()
+    };
 }
-pub(crate) fn port() ->u32{
-    return if is_github_ci() {
-        TEST_PORT
-    } else { 25575 }
+pub(crate) fn port() -> u32 {
+    return if is_github_ci() { TEST_PORT } else { 25575 };
 }
-pub(crate) fn password() ->String{
+pub(crate) fn password() -> String {
     return if is_github_ci() {
         TEST_PASSWORD.to_string()
-    } else { "password".to_string() }
+    } else {
+        "password".to_string()
+    };
 }
 
-fn is_github_ci()->bool{
+fn is_github_ci() -> bool {
     return std::env::var("GITHUB_ACTIONS").is_ok();
 }
