@@ -22,11 +22,11 @@
  * // Author: Jack Wang <wang@rjack.cn>
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
+
+use crate::error::{BPacketConverterError, CreatePacketError, RconError};
+
 const MAX_PAYLOAD_SIZE: usize = 1446;
 pub type PacketBytes = Vec<u8>;
-
-use crate::error::{BPacketConverterError, CreatePacketError};
-use std::error::Error;
 
 #[repr(i32)]
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -48,6 +48,7 @@ pub struct PacketWithoutSize {
     /// Commonly, terminator should be  `\0`, as default
     terminator: char,
 }
+
 impl PacketWithoutSize {
     pub fn builder() -> PacketWithoutSizeBuilder {
         PacketWithoutSizeBuilder {
@@ -57,17 +58,19 @@ impl PacketWithoutSize {
             terminator: Some('\0'),
         }
     }
-    pub fn check_auth(id: i32, ans: &Self) -> Result<(), crate::error::RconError> {
+
+    pub fn check_auth(id: i32, ans: &Self) -> Result<(), RconError> {
         if ans.packet_type == PacketType::AuthResponseOrExecCommand && ans.id == id {
             Ok(())
         } else if ans.id == -1 {
-            Err(crate::error::RconError::IncorrectPasswordError)
+            Err(RconError::IncorrectPasswordError)
         } else {
-            Err(crate::error::RconError::AuthenticationError(
-                "mismatched packet id".to_string(),
+            Err(RconError::PacketConversionError(
+                BPacketConverterError::InvalidPacket("mismatched packet id".to_string()),
             ))
         }
     }
+
     pub fn get_payload(&self) -> Option<String> {
         let payload = self.payload.clone();
         if payload.len() == 1 {
@@ -78,6 +81,7 @@ impl PacketWithoutSize {
             None
         }
     }
+
     pub fn get_id(&self) -> i32 {
         self.id
     }
@@ -97,6 +101,7 @@ impl PacketWithoutSizeBuilder {
         self.id = Some(id);
         self
     }
+
     /// Set up `packet_type`
     pub fn packet_type(mut self, packet_type: PacketType) -> Self {
         self.packet_type = Some(packet_type);
@@ -106,46 +111,36 @@ impl PacketWithoutSizeBuilder {
     /// Set up `payload`
     /// Length of `payload` should be less than **1446 Bytes**
     pub fn payload(mut self, payload: String) -> Result<Self, CreatePacketError> {
-        // check no 0x00
         if payload.contains('\0') {
-            Err(CreatePacketError::InputPayloadEndWithZero)?;
+            return Err(CreatePacketError::InputPayloadEndWithZero);
         }
-        if &payload.len() > &MAX_PAYLOAD_SIZE {
-            Err(CreatePacketError::InputPayloadOversize)?;
+        if payload.len() > MAX_PAYLOAD_SIZE {
+            return Err(CreatePacketError::InputPayloadOversize);
         }
-        let payload_end_with_terminator = payload.clone() + "\0";
+        let payload_end_with_terminator = payload + "\0";
         self.payload = Some(payload_end_with_terminator);
         Ok(self)
     }
 
     /// Set up `terminator`
     pub fn terminator(mut self, terminator: Option<char>) -> Self {
-        match terminator {
-            None => {
-                self.terminator = Some('\0');
-                self
-            }
-            Some(terminator) => {
-                self.terminator = Some(terminator);
-                self
-            }
-        }
+        self.terminator = Some(terminator.unwrap_or('\0'));
+        self
     }
+
     /// Create a `PacketWithoutSize`
     pub fn build(self) -> Result<PacketWithoutSize, CreatePacketError> {
         Ok(PacketWithoutSize {
-            id: self
-                .id
-                .ok_or_else(|| CreatePacketError::MissingField("id"))?,
+            id: self.id.ok_or(CreatePacketError::MissingField("id"))?,
             packet_type: self
                 .packet_type
-                .ok_or_else(|| CreatePacketError::MissingField("packet_type"))?,
+                .ok_or(CreatePacketError::MissingField("packet_type"))?,
             payload: self
                 .payload
-                .ok_or_else(|| CreatePacketError::MissingField("payload"))?,
+                .ok_or(CreatePacketError::MissingField("payload"))?,
             terminator: self
                 .terminator
-                .ok_or_else(|| CreatePacketError::MissingField("terminator"))?,
+                .ok_or(CreatePacketError::MissingField("terminator"))?,
         })
     }
 }
@@ -162,16 +157,17 @@ pub struct PacketInBytes {
     /// The original terminator
     terminator: char,
     /// The size of the packet without `size` field
-    /// Should less than **1456 Bytes**
+    /// Should be less than **1456 Bytes**
     size: i32,
     /// The packet ready for sending
     packet: Vec<u8>,
 }
+
 impl PacketInBytes {
     /// Convert a `PacketWithoutSize` to a `PacketInBytes`
     pub fn convert_to_bytes(
         frontend_packet: &PacketWithoutSize,
-    ) -> Result<PacketInBytes, Box<dyn Error>> {
+    ) -> Result<PacketInBytes, CreatePacketError> {
         let id = frontend_packet.id;
         let packet_type = frontend_packet.packet_type;
         let payload = frontend_packet.payload.clone();
@@ -189,6 +185,7 @@ impl PacketInBytes {
         packet.extend_from_slice(&(packet_type as i32).to_le_bytes());
         packet.extend_from_slice(payload.as_bytes());
         packet.push(terminator as u8);
+
         Ok(PacketInBytes {
             id,
             packet_type,
@@ -198,6 +195,7 @@ impl PacketInBytes {
             packet,
         })
     }
+
     pub fn get_packet(&self) -> &Vec<u8> {
         &self.packet
     }
@@ -214,6 +212,7 @@ pub struct ReceivedBPacketList {
     packet_type_list: Vec<PacketType>,
     packets: Vec<Vec<u8>>,
 }
+
 impl ReceivedBPacketList {
     /// Put data in buffer here
     pub fn new(raw_data: &[u8]) -> Result<ReceivedBPacketList, BPacketConverterError> {
@@ -228,37 +227,17 @@ impl ReceivedBPacketList {
         })
     }
 
-    // size filed is not used
+    // size field is not used
     fn slicer(raw_data: &[u8]) -> Result<Vec<Vec<u8>>, BPacketConverterError> {
         const TERMINATOR_FLAG: u8 = 0x00;
         let mut packets_list: Vec<Vec<u8>> = Vec::new();
         let mut last_idx = 12usize;
-        if raw_data.len() < 2 {
-            Err(BPacketConverterError::InvalidPacket(
-                "raw_data is empty".to_string(),
-            ))?;
-        }
         if raw_data.len() < 14 {
-            Err(BPacketConverterError::InvalidPacket(
-                "not a rcon packet".to_string(),
-            ))?;
+            return Err(BPacketConverterError::InvalidPacket(
+                "not a valid RCON packet".to_string(),
+            ));
         }
-        /*
-        0x00 0x00 0x00 0x00 size
-        0x00 0x00 0x00 0x00 id
-        0x00 0x00 0x00 0x00 type
-        b1   b2   b3   b4   payload
-        b5   0x00           payload
-        0x00                terminator
 
-        0x00 0x00 0x00 0x00
-        0x00 0x00 0x00 0x00
-        0x00 0x00 0x00 0x00
-        b1   b2   b3   b4
-        b5   0x00
-        0x00
-        */
-        // Search for two consecutive 0x00 as a delimiter
         while last_idx < raw_data.len() {
             if raw_data.len() - last_idx < 2 {
                 break;
@@ -272,121 +251,68 @@ impl ReceivedBPacketList {
             }
         }
 
-        Ok(packets_list)
+        if packets_list.is_empty() {
+            Err(BPacketConverterError::InvalidPacket(
+                "no packets found".to_string(),
+            ))
+        } else {
+            Ok(packets_list)
+        }
     }
 
-    // size field is used, in case of segments
-    fn slicer_using_size(raw_data: &[u8]) -> Result<Vec<Vec<u8>>, BPacketConverterError> {
-        let mut packets_list: Vec<Vec<u8>> = Vec::new();
-        let mut counter = 0;
-        let mut last_idx = 0usize;
-        if raw_data.len() < 4 {
-            Err(BPacketConverterError::InvalidPacket(
-                "empty packet".to_string(),
-            ))?;
-        }
-        while last_idx < raw_data.len() {
-            if raw_data.len() - last_idx < 4 {
-                break;
+    fn classifier(packets: &[Vec<u8>]) -> Result<Vec<PacketType>, BPacketConverterError> {
+        let mut packet_type_list = Vec::new();
+        for packet in packets {
+            if packet.len() < 12 {
+                return Err(BPacketConverterError::InvalidPacket(
+                    "packet too short".to_string(),
+                ));
             }
-            let raw_size = raw_data[last_idx..last_idx + 4]
-                .try_into()
-                .ok()
-                .map(i32::from_le_bytes)
-                .expect("cannot convert raw bytes to packet size");
-            if (raw_size as usize + 4 + last_idx) > raw_data.len() {
-                break;
-            }
-            if raw_size < 10 {
-                break;
-            }
-            // in case of segmenting
-            if raw_size > 1456 {
-                break;
-            }
-            let packet = raw_data[last_idx..last_idx + (raw_size as usize) + 4].to_vec();
-            packets_list.push(packet);
-            counter += 1;
-            last_idx += raw_size as usize + 4 + last_idx;
-        }
-
-        if counter == 0 {
-            Err(BPacketConverterError::InvalidPacket(
-                "empty packet".to_string(),
-            ))?;
-        }
-        Ok(packets_list)
-    }
-    fn classifier(packets: &Vec<Vec<u8>>) -> Result<Vec<PacketType>, BPacketConverterError> {
-        let mut packet_type_list: Vec<PacketType> = vec![];
-        for packet in packets.iter() {
-            let packet_type = packet[8..12]
-                .try_into()
-                .ok()
-                .map(i32::from_le_bytes)
-                .expect("cannot convert raw bytes to packet type");
-            match packet_type {
-                3 => {
-                    packet_type_list.push(PacketType::Auth);
-                }
-                2 => {
-                    packet_type_list.push(PacketType::AuthResponseOrExecCommand);
-                }
-                0 => {
-                    packet_type_list.push(PacketType::Response);
-                }
-                _ => {
-                    packet_type_list.push(PacketType::Invalid);
-                }
-            }
+            let packet_type = i32::from_le_bytes(packet[8..12].try_into().map_err(|_| {
+                BPacketConverterError::InvalidPacket("cannot read packet type".to_string())
+            })?);
+            let ptype = match packet_type {
+                3 => PacketType::Auth,
+                2 => PacketType::AuthResponseOrExecCommand,
+                0 => PacketType::Response,
+                _ => PacketType::Invalid,
+            };
+            packet_type_list.push(ptype);
         }
         Ok(packet_type_list)
     }
 
     /// Convert raw data from buffer into `PacketWithoutSize`
     pub fn into_packet_without_size(self) -> Result<Vec<PacketWithoutSize>, BPacketConverterError> {
-        // let mut rest_length = self.length;
-        let mut id_list: Vec<i32> = vec![];
-        let type_list: Vec<PacketType> = self.packet_type_list;
-        let mut payload_list: Vec<String> = vec![];
-        let mut packet_result_list: Vec<PacketWithoutSize> = vec![];
-        for packet in self.packets.iter() {
-            let id = packet[4..8]
-                .try_into()
-                .ok()
-                .map(i32::from_le_bytes)
-                .expect("cannot convert raw bytes to packet id");
-            let payload = packet[12..packet.len() - 2]
-                .to_vec()
-                .into_iter()
-                .map(|x| x as char)
-                .collect::<String>();
-            id_list.push(id);
-            payload_list.push(payload);
-        }
-        if type_list.len() != payload_list.len() {
-            Err(BPacketConverterError::SegmentingError(
-                "packet_type_list and payload_list length mismatch".to_string(),
-            ))?
-        }
-        if type_list.len() != id_list.len() {
-            Err(BPacketConverterError::SegmentingError(
-                "packet_type_list and id_list length mismatch".to_string(),
-            ))?
-        }
-        for idx in 0..type_list.len() {
-            let new_packet = PacketWithoutSize::builder()
-                .id(id_list[idx])
-                .packet_type(type_list[idx])
-                .payload(payload_list[idx].clone())
-                .unwrap()
-                .terminator(Some('\0'))
-                .build();
-            if let Err(e) = new_packet {
-                Err(BPacketConverterError::InvalidPacket(e.to_string()))?;
-            } else {
-                packet_result_list.push(new_packet.unwrap());
+        let mut packet_result_list = Vec::new();
+        for (i, packet) in self.packets.iter().enumerate() {
+            if packet.len() < 14 {
+                return Err(BPacketConverterError::InvalidPacket(
+                    "packet too short".to_string(),
+                ));
             }
+            let id = i32::from_le_bytes(packet[4..8].try_into().map_err(|_| {
+                BPacketConverterError::InvalidPacket("cannot read packet id".to_string())
+            })?);
+            let payload = packet[12..packet.len() - 2]
+                .iter()
+                .map(|&x| x as char)
+                .collect::<String>();
+
+            let packet_type = self.packet_type_list.get(i).ok_or_else(|| {
+                BPacketConverterError::SegmentingError("missing packet type".to_string())
+            })?;
+
+            let new_packet = PacketWithoutSize::builder()
+                .id(id)
+                .packet_type(*packet_type)
+                .payload(payload)
+                .map_err(|e| BPacketConverterError::InvalidPacket(e.to_string()))?
+                .terminator(Some('\0'))
+                .build()
+                .map_err(|e| BPacketConverterError::InvalidPacket(e.to_string()))?;
+
+            packet_result_list.push(new_packet);
         }
         Ok(packet_result_list)
     }
@@ -398,13 +324,14 @@ pub fn test_slicer(raw_data: &[u8]) -> Result<Vec<Vec<u8>>, BPacketConverterErro
 }
 
 #[cfg(debug_assertions)]
-pub fn test_classifier(packets: &Vec<Vec<u8>>) -> Result<Vec<PacketType>, BPacketConverterError> {
+pub fn test_classifier(packets: &[Vec<u8>]) -> Result<Vec<PacketType>, BPacketConverterError> {
     ReceivedBPacketList::classifier(packets)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
     #[test]
     fn test_packet_without_size_builder() {
         let packet = PacketWithoutSize::builder()
@@ -425,8 +352,9 @@ mod tests {
             .payload("test".to_string())
             .unwrap()
             .terminator(None)
-            .build();
-        let packet = PacketInBytes::convert_to_bytes(&packet.unwrap());
+            .build()
+            .unwrap();
+        let packet = PacketInBytes::convert_to_bytes(&packet);
         assert!(packet.is_ok());
     }
 
@@ -447,6 +375,6 @@ mod tests {
             .clone();
         let packet_r = ReceivedBPacketList::new(packet1.as_slice());
         let result = packet_r.unwrap().into_packet_without_size();
-        assert_eq!(result.unwrap(), vec![test1])
+        assert_eq!(result.unwrap(), vec![test1]);
     }
 }

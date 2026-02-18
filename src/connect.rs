@@ -22,9 +22,9 @@
  * // Author: Jack Wang <wang@rjack.cn>
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
-use crate::error::RconConnectionError;
+
+use crate::error::{CreatePacketError, RconConnectionError, RconError};
 use crate::packet::{PacketInBytes, PacketType, PacketWithoutSize};
-use std::error::Error;
 use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::net::{SocketAddr, ToSocketAddrs};
@@ -35,6 +35,7 @@ pub struct ConnectManager {
     pub buffer_size: usize,
     stream: TcpStream,
 }
+
 impl ConnectManager {
     pub fn builder() -> ConnectManagerBuilder {
         ConnectManagerBuilder {
@@ -44,23 +45,23 @@ impl ConnectManager {
             port: None,
         }
     }
-    pub fn send_auth(&mut self, password: &String, id: usize) -> Result<(), Box<dyn Error>> {
+
+    pub fn send_auth(&mut self, password: &str, id: usize) -> Result<(), RconError> {
         let packet = create_packet(id, PacketType::Auth, password)?;
-
         let packet_to_send = PacketInBytes::convert_to_bytes(&packet)?
             .get_packet()
             .clone();
-
-        write_stream(&mut self.stream, packet_to_send)
+        write_stream(&mut self.stream, packet_to_send)?;
+        Ok(())
     }
-    pub fn send_command(&mut self, command: &String, id: usize) -> Result<(), Box<dyn Error>> {
-        let packet = create_packet(id, PacketType::AuthResponseOrExecCommand, command)?;
 
+    pub fn send_command(&mut self, command: &str, id: usize) -> Result<(), RconError> {
+        let packet = create_packet(id, PacketType::AuthResponseOrExecCommand, command)?;
         let packet_to_send = PacketInBytes::convert_to_bytes(&packet)?
             .get_packet()
             .clone();
-
-        write_stream(&mut self.stream, packet_to_send)
+        write_stream(&mut self.stream, packet_to_send)?;
+        Ok(())
     }
 
     pub fn receive_packet(&mut self) -> Result<Vec<u8>, RconConnectionError> {
@@ -73,10 +74,12 @@ impl ConnectManager {
                 Ok(0) => {
                     if total_read == 0 {
                         return Err(RconConnectionError::StreamReadingError(
-                            "Stream read error".to_string(),
-                        ))?;
+                            std::io::Error::new(
+                                std::io::ErrorKind::UnexpectedEof,
+                                "Stream read error",
+                            ),
+                        ));
                     } else {
-                        // end reading
                         break;
                     }
                 }
@@ -95,24 +98,19 @@ impl ConnectManager {
                         break;
                     }
                 }
-                Err(e) => match e {
-                    ref e if e.kind() == std::io::ErrorKind::Interrupted => {
-                        continue;
-                    }
-                    ref e if e.kind() == std::io::ErrorKind::WouldBlock => {
-                        break;
-                    }
-                    _ => return Err(RconConnectionError::StreamReadingError(e.to_string()))?,
-                },
+                Err(e) if e.kind() == std::io::ErrorKind::Interrupted => continue,
+                Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => break,
+                Err(e) => return Err(RconConnectionError::StreamReadingError(e)),
             }
         }
 
         Ok(raw_data)
     }
+
     pub fn shutdown(&mut self) -> Result<(), RconConnectionError> {
-        if let Err(e) = self.stream.shutdown(std::net::Shutdown::Both) {
-            Err(RconConnectionError::StreamClosingError(e.to_string()))?
-        }
+        self.stream
+            .shutdown(std::net::Shutdown::Both)
+            .map_err(RconConnectionError::StreamClosingError)?;
         Ok(())
     }
 }
@@ -123,62 +121,71 @@ pub struct ConnectManagerBuilder {
     host: Option<String>,
     port: Option<u32>,
 }
+
 impl ConnectManagerBuilder {
     pub fn max_timeout(mut self, max_timeout: u64) -> Self {
         self.max_timeout = Some(max_timeout);
         self
     }
+
     pub fn buffer_size(mut self, buffer_size: usize) -> Self {
         self.buffer_size = Some(buffer_size);
         self
     }
+
     pub fn host(mut self, host: String) -> Self {
         self.host = Some(host);
         self
     }
+
     pub fn port(mut self, port: u32) -> Self {
         self.port = Some(port);
         self
     }
+
     pub fn connect(self) -> Result<ConnectManager, RconConnectionError> {
-        let hostname = self.host.clone().unwrap();
-        let port = self.port.unwrap();
-        let start_time = std::time::Instant::now();
-        let tcp_stream: TcpStream;
+        let hostname = self.host.ok_or(RconConnectionError::MissingField("host"))?;
+        let port = self.port.ok_or(RconConnectionError::MissingField("port"))?;
+        let max_timeout = self
+            .max_timeout
+            .ok_or(RconConnectionError::MissingField("max_timeout"))?;
+        let buffer_size = self
+            .buffer_size
+            .ok_or(RconConnectionError::MissingField("buffer_size"))?;
+
         let addr = format!("{}:{}", hostname, port);
-        let socket_addrs: Vec<SocketAddr> = addr.to_socket_addrs().unwrap().collect();
+        let socket_addrs: Vec<SocketAddr> = addr
+            .to_socket_addrs()
+            .map_err(RconConnectionError::TCPConnectionError)?
+            .collect();
 
-        loop {
-            if start_time.elapsed().as_secs() > self.max_timeout.unwrap() {
-                Err(RconConnectionError::TCPConnectionTimeoutError)?
+        if socket_addrs.is_empty() {
+            return Err(RconConnectionError::TCPConnectionError(
+                std::io::Error::new(std::io::ErrorKind::InvalidInput, "no addresses resolved"),
+            ));
+        }
+
+        let start_time = std::time::Instant::now();
+        let tcp_stream = loop {
+            if start_time.elapsed().as_secs() > max_timeout {
+                return Err(RconConnectionError::TCPConnectionTimeoutError);
             }
 
-            match TcpStream::connect_timeout(
-                &socket_addrs[0],
-                Duration::from_secs(self.max_timeout.unwrap()),
-            ) {
-                Ok(stream) => {
-                    tcp_stream = stream;
-                    break;
-                }
-                Err(e) => Err(RconConnectionError::TCPConnectionError(e.to_string()))?,
+            match TcpStream::connect_timeout(&socket_addrs[0], Duration::from_secs(max_timeout)) {
+                Ok(stream) => break stream,
+                Err(e) => return Err(RconConnectionError::TCPConnectionError(e)),
             }
-        }
-        if let Err(e) =
-            tcp_stream.set_read_timeout(Some(Duration::from_secs(self.max_timeout.unwrap())))
-        {
-            Err(RconConnectionError::TCPConnectionError(e.to_string()))?
-        }
-        if let Err(e) =
-            tcp_stream.set_write_timeout(Some(Duration::from_secs(self.max_timeout.unwrap())))
-        {
-            Err(RconConnectionError::TCPConnectionError(e.to_string()))?
-        }
+        };
+
+        tcp_stream
+            .set_read_timeout(Some(Duration::from_secs(max_timeout)))
+            .map_err(RconConnectionError::TCPConnectionError)?;
+        tcp_stream
+            .set_write_timeout(Some(Duration::from_secs(max_timeout)))
+            .map_err(RconConnectionError::TCPConnectionError)?;
 
         Ok(ConnectManager {
-            buffer_size: self
-                .buffer_size
-                .ok_or_else(|| RconConnectionError::MissingField("buffer_size"))?,
+            buffer_size,
             stream: tcp_stream,
         })
     }
@@ -187,22 +194,24 @@ impl ConnectManagerBuilder {
 fn create_packet(
     id: usize,
     packet_type: PacketType,
-    payload: &String,
-) -> Result<PacketWithoutSize, Box<dyn Error>> {
-    let packet = PacketWithoutSize::builder()
+    payload: &str,
+) -> Result<PacketWithoutSize, CreatePacketError> {
+    PacketWithoutSize::builder()
         .id(id as i32)
         .packet_type(packet_type)
-        .payload(payload.clone())?
+        .payload(payload.to_string())?
         .terminator(Some('\0'))
-        .build()?;
-    Ok(packet)
+        .build()
 }
 
-fn write_stream(stream: &mut TcpStream, packet_to_send: Vec<u8>) -> Result<(), Box<dyn Error>> {
-    match stream.write_all(packet_to_send.as_slice()) {
-        Err(e) => Err(RconConnectionError::StreamWritingError(e.to_string()))?,
-        Ok(_) => Ok(()),
-    }
+fn write_stream(
+    stream: &mut TcpStream,
+    packet_to_send: Vec<u8>,
+) -> Result<(), RconConnectionError> {
+    stream
+        .write_all(packet_to_send.as_slice())
+        .map_err(RconConnectionError::StreamWritingError)?;
+    Ok(())
 }
 
 #[cfg(test)]
@@ -217,6 +226,6 @@ mod tests {
             .port(7878)
             .connect()
             .unwrap();
-        connection.send_auth(&"123456".to_string(), 2).unwrap();
+        connection.send_auth("123456", 2).unwrap();
     }
 }

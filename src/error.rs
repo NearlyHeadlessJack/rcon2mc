@@ -31,7 +31,7 @@ pub enum CreatePacketError {
     InputPayloadEndWithZero,
     #[error("Input payload oversize")]
     InputPayloadOversize,
-    #[error("Missing filed {0} when creating packet")]
+    #[error("Missing field {0} when creating packet")]
     MissingField(&'static str),
 }
 
@@ -47,36 +47,32 @@ pub enum BPacketConverterError {
 pub enum RconConnectionError {
     #[error("TCPConnection Timeout")]
     TCPConnectionTimeoutError,
-    #[error("TCPConnection Error: {0}")]
-    TCPConnectionError(String),
-    #[error("Missing filed {0} when create TCP Stream")]
+    #[error("TCPConnection Error")]
+    TCPConnectionError(#[source] std::io::Error),
+    #[error("Missing field {0} when creating TCP Stream")]
     MissingField(&'static str),
-    #[error("Stream reading error: {0}")]
-    StreamReadingError(String),
-    #[error("Stream writing error: {0}")]
-    StreamWritingError(String),
-    #[error("Stream closing error: {0}")]
-    StreamClosingError(String),
+    #[error("Stream reading error")]
+    StreamReadingError(#[source] std::io::Error),
+    #[error("Stream writing error")]
+    StreamWritingError(#[source] std::io::Error),
+    #[error("Stream closing error")]
+    StreamClosingError(#[source] std::io::Error),
 }
 
 #[derive(Error, Debug)]
 pub enum RconError {
-    #[error("Missing filed {0} when create a Rcon connection")]
+    #[error("Missing field {0} when creating an Rcon connection")]
     MissingField(&'static str),
     #[error("Authentication Failed: Incorrect Password")]
     IncorrectPasswordError,
-    #[error("Error in Authentication:{0}")]
-    AuthenticationError(String),
-    #[error("Rcon connection error: {0}")]
-    RconConnectionError(String),
-    #[error("Rcon send packet error: {0}")]
-    RconSendPacketError(String),
-    #[error("Rcon receive packet error: {0}")]
-    RconReceivePacketError(String),
+    #[error("Rcon connection error")]
+    RconConnectionError(#[from] RconConnectionError),
+    #[error("Failed to create packet")]
+    PacketCreationError(#[from] CreatePacketError),
+    #[error("Failed to parse received packet")]
+    PacketConversionError(#[from] BPacketConverterError),
     #[error("Feedback information is None")]
     FeedbackIsNone,
-    #[error("Rcon connection shutdown error: {0}")]
-    RconShutdownError(String),
     #[error("Mismatched Response Packet ID")]
     MismatchedResponsePacketID,
     #[error("Port number is out of range")]

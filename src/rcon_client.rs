@@ -120,7 +120,7 @@ impl RconClient {
 /// let client = RconClient::builder()
 ///     .host("localhost".to_string())
 ///     .port(25575)
-///     .password("mypass".to_string())
+///     .password("password".to_string())
 ///     .build()
 ///     .expect("failed to build client");
 /// ```
