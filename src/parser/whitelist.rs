@@ -22,5 +22,24 @@
  * // Author: Jack Wang <wang@rjack.cn>
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
-pub mod consts;
-pub mod rcon;
+
+use crate::error::RconError;
+use crate::parser::utils::check_invalid_command;
+use crate::parser::utils::StringProcessor;
+use crate::rcon_client::PlayerList;
+use crate::rcon_client::RconClient;
+
+pub fn whitelist(client: &mut RconClient) -> Result<Option<PlayerList>, RconError> {
+    let mut feedback = client.send("whitelist list".to_string())?;
+    check_invalid_command(&feedback)?;
+    if feedback.contains("There are no whitelisted players") {
+        return Ok(None);
+    }
+    let player_list = feedback
+        .trim_whitespace()?
+        .trim_linebreak()?
+        .locate_to_useful_content("whitelistedplayer(s):")?
+        .segment(",")?;
+    let count = player_list.len();
+    Ok(Some(PlayerList { count, player_list }))
+}

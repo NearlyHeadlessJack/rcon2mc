@@ -22,5 +22,20 @@
  * // Author: Jack Wang <wang@rjack.cn>
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
-pub mod consts;
-pub mod rcon;
+mod utils;
+#[test]
+fn test_docker_command_whitelist() {
+    let Some(rcon) = utils::rcon::get_rcon() else {
+        return;
+    };
+    let Ok(rcon) = rcon else {
+        assert!(false);
+        return;
+    };
+    let feedback = rcon
+        .command()
+        .whitelist()
+        .expect("whitelist command push fail");
+
+    assert_eq!(feedback, None)
+}

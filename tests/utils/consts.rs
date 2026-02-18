@@ -22,29 +22,56 @@
  * // Author: Jack Wang <wang@rjack.cn>
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
+use std::env::VarError;
+
 const CI_TEST_HOST: &str = "127.0.0.1";
 const TEST_PORT: u32 = 25575;
 const TEST_PASSWORD: &str = "password";
 const LOCAL_TEST_HOST: &str = "192.168.5.28";
 
 pub(crate) fn host() -> String {
-    return if is_github_ci() {
-        CI_TEST_HOST.to_string()
+    if is_github_ci() {
+        return CI_TEST_HOST.to_string();
+    }
+    if let Ok(host) = get_env_host() {
+        host
     } else {
         LOCAL_TEST_HOST.to_string()
-    };
+    }
 }
 pub(crate) fn port() -> u32 {
-    return if is_github_ci() { TEST_PORT } else { 25575 };
+    return if is_github_ci() {
+        TEST_PORT
+    } else {
+        if let Ok(port) = get_env_port() {
+            port.parse::<u32>().unwrap()
+        } else {
+            TEST_PORT
+        }
+    };
 }
 pub(crate) fn password() -> String {
     return if is_github_ci() {
         TEST_PASSWORD.to_string()
     } else {
-        "password".to_string()
+        if let Ok(pwd) = get_env_pwd() {
+            pwd
+        } else {
+            TEST_PASSWORD.to_string()
+        }
     };
 }
 
 fn is_github_ci() -> bool {
     return std::env::var("GITHUB_ACTIONS").is_ok();
+}
+
+fn get_env_host() -> Result<String, VarError> {
+    return std::env::var("RCON_TEST_HOST");
+}
+fn get_env_port() -> Result<String, VarError> {
+    return std::env::var("RCON_TEST_PORT");
+}
+fn get_env_pwd() -> Result<String, VarError> {
+    return std::env::var("RCON_TEST_PASSWORD");
 }

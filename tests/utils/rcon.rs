@@ -22,5 +22,21 @@
  * // Author: Jack Wang <wang@rjack.cn>
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
-pub mod consts;
-pub mod rcon;
+use crate::utils;
+use rcon2mc::rcon_client::RconClient;
+
+pub fn get_rcon() -> Option<Result<RconClient, rcon2mc::error::RconError>> {
+    if get_env() {
+        return None;
+    }
+    let rcon = RconClient::builder()
+        .host(utils::consts::host())
+        .port(utils::consts::port())
+        .password(utils::consts::password())
+        .build();
+    Some(rcon)
+}
+
+fn get_env() -> bool {
+    return std::env::var("RCON_TEST_PART").is_ok();
+}

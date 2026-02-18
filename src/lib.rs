@@ -23,9 +23,10 @@
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
 
+pub mod command;
 mod connect;
 pub mod error;
 mod packet;
+mod parser;
 mod rcon;
 pub mod rcon_client;
-mod parser;

@@ -30,6 +30,12 @@ use std::str::FromStr;
 const RCON_ENV_BUFFER_SIZE: &str = "RCON_BUFFER_SIZE";
 const RCON_ENV_TIMEOUT: &str = "RCON_TIMEOUT";
 
+#[derive(Debug, PartialEq)]
+pub struct PlayerList {
+    pub count: usize,
+    pub player_list: Vec<String>,
+}
+
 /// A client for communicating with an RCON (Remote Console) server.
 ///
 /// This struct represents an authenticated connection to an RCON server.

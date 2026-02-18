@@ -77,4 +77,8 @@ pub enum RconError {
     MismatchedResponsePacketID,
     #[error("Port number is out of range")]
     PortOutOfRangeError,
+    #[error("Invalid Command")]
+    InvalidCommandError,
+    #[error("UnknownParserError for {0}")]
+    UnknownParserError(String),
 }
