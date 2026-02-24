@@ -36,15 +36,42 @@ pub struct PlayerList {
     pub player_list: Vec<String>,
 }
 
+/// Represents the result of an operation targeting a specific player.
+///
+/// This enum is used by commands that modify server state related to a player,
+/// such as adding or removing them from the whitelist. It distinguishes between
+/// a successful operation (with possible sub‑statuses) and the case where the
+/// player name is not recognized by Mojang's authentication servers.
 #[derive(Debug, PartialEq)]
 pub enum TargetStatus {
+    /// The operation was successful. The contained [`TargetStatusSuccess`]
+    /// provides additional detail about the exact outcome.
     Success(TargetStatusSuccess),
+    /// The target player does not exist on the Mojang authentication servers.
+    /// This typically means the provided username is invalid or has never been
+    /// used.
     NotFound,
 }
 
+/// Provides additional context for a successful operation.
+///
+/// This enum distinguishes between an operation that actually changed the
+/// server state and one that had no effect because the desired state was
+/// already present.
 #[derive(Debug, PartialEq)]
 pub enum TargetStatusSuccess {
+    /// The operation was executed and changed the state.
+    ///
+    /// For example:
+    /// * A player was added to the whitelist (they were not previously there).
+    /// * A player was removed from the whitelist (they were present before).
     Success,
+    /// The operation succeeded but did not alter the state because the target
+    /// was already in the desired condition.
+    ///
+    /// For example:
+    /// * Adding a player who is already whitelisted.
+    /// * Removing a player who is not whitelisted.
     Duplicated,
 }
 

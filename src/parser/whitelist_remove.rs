@@ -22,7 +22,32 @@
  * // Author: Jack Wang <wang@rjack.cn>
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
-mod utils;
-pub(crate) mod whitelist;
-pub(crate) mod whitelist_add;
-pub(crate) mod whitelist_remove;
+
+use crate::error::RconError;
+use crate::parser::utils::check_invalid_command;
+use crate::parser::utils::StringProcessor;
+use crate::rcon_client::RconClient;
+use crate::rcon_client::{TargetStatus, TargetStatusSuccess};
+
+pub fn whitelist_remove(client: &mut RconClient, player: &str) -> Result<TargetStatus, RconError> {
+    let command = format!("whitelist remove {}", player);
+
+    let mut feedback = client.send(command.to_string())?;
+    check_invalid_command(&feedback)?;
+    if feedback.contains("That player does not exist") {
+        return Ok(TargetStatus::NotFound);
+    }
+    if feedback.contains("Player is not whitelisted") {
+        return Ok(TargetStatus::Success(TargetStatusSuccess::Duplicated));
+    }
+    if feedback.contains("Removed") {
+        return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
+    }
+    Err(RconError::UnknownParserError(
+        format!(
+            "Unknown error when removing player {} from the whitelist.",
+            player
+        )
+        .to_string(),
+    ))
+}

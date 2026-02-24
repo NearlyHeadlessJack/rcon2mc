@@ -99,3 +99,23 @@ fn test_docker_command_whitelist_add_duplicated() {
         TargetStatus::Success(TargetStatusSuccess::Duplicated)
     )
 }
+
+#[test]
+fn test_docker_command_whitelist_remove_success() {
+    let Some(rcon) = utils::rcon::get_rcon() else {
+        return;
+    };
+    let Ok(rcon) = rcon else {
+        assert!(false);
+        return;
+    };
+    let feedback = rcon
+        .command()
+        .whitelist_remove("ASWATER")
+        .expect("whitelist remove command push fail");
+
+    assert_eq!(
+        feedback,
+        TargetStatus::Success(TargetStatusSuccess::Duplicated)
+    )
+}
