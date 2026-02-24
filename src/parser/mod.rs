@@ -22,6 +22,12 @@
  * // Author: Jack Wang <wang@rjack.cn>
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
+pub(crate) mod ban;
+pub mod difficulty;
+pub mod gamemode;
+pub mod give;
+pub mod op;
+pub(crate) mod stop;
 mod utils;
 pub(crate) mod whitelist;
 pub(crate) mod whitelist_add;

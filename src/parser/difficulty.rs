@@ -25,28 +25,41 @@
 
 use crate::error::RconError;
 use crate::parser::utils::check_invalid_command;
+use crate::parser::utils::StringProcessor;
 use crate::rcon_client::RconClient;
-use crate::rcon_client::{TargetStatus, TargetStatusSuccess};
+use crate::rcon_client::{PlayerList, TargetStatus, TargetStatusSuccess};
 
-pub fn whitelist_remove(client: &mut RconClient, player: &str) -> Result<TargetStatus, RconError> {
-    let command = format!("whitelist remove {}", player);
+pub fn difficulty(
+    client: &mut RconClient,
+    difficulty_name: &str,
+) -> Result<TargetStatus, RconError> {
+    let mut diff = String::from("peace");
+    match difficulty_name {
+        "peaceful" => diff = "peaceful".to_string(),
+        "easy" => diff = "easy".to_string(),
+        "normal" => diff = "normal".to_string(),
+        "hard" => diff = "hard".to_string(),
+        _ => {
+            return Err(RconError::UnknownParserError(
+                format!("Unknown difficulty {}.", difficulty_name).to_string(),
+            ))
+        }
+    }
 
-    let mut feedback = client.send(command.to_string())?;
+    let command = format!("difficulty {}", diff);
+
+    let feedback = client.send(command.to_string())?;
     check_invalid_command(&feedback)?;
-    if feedback.contains("That player does not exist") {
+    if feedback.contains("Incorrect argument for command") {
         return Ok(TargetStatus::NotFound);
     }
-    if feedback.contains("Player is not whitelisted") {
+    if feedback.contains("The difficulty did not change") {
         return Ok(TargetStatus::Success(TargetStatusSuccess::Duplicated));
     }
-    if feedback.contains("Removed") {
+    if feedback.contains("The difficulty has been set") {
         return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
     }
     Err(RconError::UnknownParserError(
-        format!(
-            "Unknown error when removing player {} from the whitelist.",
-            player
-        )
-        .to_string(),
+        format!("Unknown error when change difficulty to {}.", diff).to_string(),
     ))
 }

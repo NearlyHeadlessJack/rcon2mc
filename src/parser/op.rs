@@ -25,28 +25,44 @@
 
 use crate::error::RconError;
 use crate::parser::utils::check_invalid_command;
+use crate::parser::utils::StringProcessor;
 use crate::rcon_client::RconClient;
-use crate::rcon_client::{TargetStatus, TargetStatusSuccess};
+use crate::rcon_client::{PlayerList, TargetStatus, TargetStatusSuccess};
 
-pub fn whitelist_remove(client: &mut RconClient, player: &str) -> Result<TargetStatus, RconError> {
-    let command = format!("whitelist remove {}", player);
+pub fn op(client: &mut RconClient, player: &str) -> Result<TargetStatus, RconError> {
+    let command = format!("op {}", player);
 
-    let mut feedback = client.send(command.to_string())?;
+    let feedback = client.send(command.to_string())?;
     check_invalid_command(&feedback)?;
     if feedback.contains("That player does not exist") {
         return Ok(TargetStatus::NotFound);
     }
-    if feedback.contains("Player is not whitelisted") {
+    if feedback.contains("Nothing changed.") {
         return Ok(TargetStatus::Success(TargetStatusSuccess::Duplicated));
     }
-    if feedback.contains("Removed") {
+    if feedback.contains("Made") {
         return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
     }
     Err(RconError::UnknownParserError(
-        format!(
-            "Unknown error when removing player {} from the whitelist.",
-            player
-        )
-        .to_string(),
+        format!("Unknown error when op player {}.", player).to_string(),
+    ))
+}
+
+pub fn deop(client: &mut RconClient, player: &str) -> Result<TargetStatus, RconError> {
+    let command = format!("deop {}", player);
+
+    let feedback = client.send(command.to_string())?;
+    check_invalid_command(&feedback)?;
+    if feedback.contains("That player does not exist") {
+        return Ok(TargetStatus::NotFound);
+    }
+    if feedback.contains("Nothing changed.") {
+        return Ok(TargetStatus::Success(TargetStatusSuccess::Duplicated));
+    }
+    if feedback.contains("no longer a server operator") {
+        return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
+    }
+    Err(RconError::UnknownParserError(
+        format!("Unknown error when deop player {}.", player).to_string(),
     ))
 }

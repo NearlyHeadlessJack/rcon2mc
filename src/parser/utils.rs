@@ -35,6 +35,7 @@ pub trait StringProcessor {
     fn trim_whitespace(&mut self) -> Result<&mut Self, RconError>;
     fn trim_linebreak(&mut self) -> Result<&mut Self, RconError>;
     fn locate_to_useful_content(&mut self, prefix: &str) -> Result<&mut Self, RconError>;
+    fn locate_to_useful_content_before(&mut self, prefix: &str) -> Result<&mut Self, RconError>;
 
     fn segment(&mut self, delimiter: &str) -> Result<Vec<String>, RconError>;
 }
@@ -54,6 +55,18 @@ impl StringProcessor for String {
     fn locate_to_useful_content(&mut self, prefix: &str) -> Result<&mut Self, RconError> {
         if let Some(pos) = self.find(prefix) {
             let remaining = self[pos + prefix.len()..].to_string();
+            *self = remaining;
+            Ok(self)
+        } else {
+            Err(RconError::UnknownParserError(
+                "Cannot locate useful content".to_string(),
+            ))
+        }
+    }
+
+    fn locate_to_useful_content_before(&mut self, prefix: &str) -> Result<&mut Self, RconError> {
+        if let Some(pos) = self.find(prefix) {
+            let remaining = self[..pos].to_string();
             *self = remaining;
             Ok(self)
         } else {

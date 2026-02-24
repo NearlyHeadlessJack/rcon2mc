@@ -26,27 +26,32 @@
 use crate::error::RconError;
 use crate::parser::utils::check_invalid_command;
 use crate::rcon_client::RconClient;
-use crate::rcon_client::{TargetStatus, TargetStatusSuccess};
 
-pub fn whitelist_remove(client: &mut RconClient, player: &str) -> Result<TargetStatus, RconError> {
-    let command = format!("whitelist remove {}", player);
-
-    let mut feedback = client.send(command.to_string())?;
+pub fn stop(client: &mut RconClient) -> Result<(), RconError> {
+    let feedback = client.send("stop".to_string())?;
     check_invalid_command(&feedback)?;
-    if feedback.contains("That player does not exist") {
-        return Ok(TargetStatus::NotFound);
+    Ok(())
+}
+
+pub fn save(client: &mut RconClient, save_type: &str) -> Result<(), RconError> {
+    match save_type {
+        "all" => {
+            let feedback = client.send("save-all".to_string())?;
+            check_invalid_command(&feedback)?;
+            Ok(())
+        }
+        "off" => {
+            let feedback = client.send("save-off".to_string())?;
+            check_invalid_command(&feedback)?;
+            Ok(())
+        }
+        "on" => {
+            let feedback = client.send("save-on".to_string())?;
+            check_invalid_command(&feedback)?;
+            Ok(())
+        }
+        _ => {
+            return Err(RconError::InvalidCommandError);
+        }
     }
-    if feedback.contains("Player is not whitelisted") {
-        return Ok(TargetStatus::Success(TargetStatusSuccess::Duplicated));
-    }
-    if feedback.contains("Removed") {
-        return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
-    }
-    Err(RconError::UnknownParserError(
-        format!(
-            "Unknown error when removing player {} from the whitelist.",
-            player
-        )
-        .to_string(),
-    ))
 }

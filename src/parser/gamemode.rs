@@ -25,27 +25,46 @@
 
 use crate::error::RconError;
 use crate::parser::utils::check_invalid_command;
+use crate::parser::utils::StringProcessor;
 use crate::rcon_client::RconClient;
-use crate::rcon_client::{TargetStatus, TargetStatusSuccess};
+use crate::rcon_client::{PlayerList, TargetStatus, TargetStatusSuccess};
 
-pub fn whitelist_remove(client: &mut RconClient, player: &str) -> Result<TargetStatus, RconError> {
-    let command = format!("whitelist remove {}", player);
+pub fn gamemode(
+    client: &mut RconClient,
+    gamemode_name: &str,
+    target: Option<&str>,
+) -> Result<TargetStatus, RconError> {
+    let mut mode = String::from("survival");
+    match gamemode_name {
+        "survival" => mode = "survival".to_string(),
+        "creative" => mode = "creative".to_string(),
+        "adventure" => mode = "adventure".to_string(),
+        "spectator" => mode = "spectator".to_string(),
+        _ => {
+            return Err(RconError::UnknownParserError(
+                format!("Unknown gamemode {}.", gamemode_name).to_string(),
+            ))
+        }
+    }
 
-    let mut feedback = client.send(command.to_string())?;
+    let command = format!("gamemode {} {}", mode, target.unwrap_or("@a"));
+
+    let feedback = client.send(command.to_string())?;
     check_invalid_command(&feedback)?;
-    if feedback.contains("That player does not exist") {
+    if feedback.contains("No player was found") {
         return Ok(TargetStatus::NotFound);
     }
-    if feedback.contains("Player is not whitelisted") {
+    if feedback == " ".to_string() {
         return Ok(TargetStatus::Success(TargetStatusSuccess::Duplicated));
     }
-    if feedback.contains("Removed") {
+    if feedback.contains("game mode to") {
         return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
     }
     Err(RconError::UnknownParserError(
         format!(
-            "Unknown error when removing player {} from the whitelist.",
-            player
+            "Unknown error when change player {} gamemode to {}.",
+            target.unwrap_or("@a"),
+            mode
         )
         .to_string(),
     ))

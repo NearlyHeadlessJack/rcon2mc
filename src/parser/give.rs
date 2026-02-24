@@ -22,31 +22,38 @@
  * // Author: Jack Wang <wang@rjack.cn>
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
-
 use crate::error::RconError;
 use crate::parser::utils::check_invalid_command;
+use crate::parser::utils::StringProcessor;
 use crate::rcon_client::RconClient;
-use crate::rcon_client::{TargetStatus, TargetStatusSuccess};
+use crate::rcon_client::{PlayerList, TargetStatus, TargetStatusSuccess};
 
-pub fn whitelist_remove(client: &mut RconClient, player: &str) -> Result<TargetStatus, RconError> {
-    let command = format!("whitelist remove {}", player);
-
-    let mut feedback = client.send(command.to_string())?;
+pub fn give(
+    client: &mut RconClient,
+    target: &str,
+    item: &str,
+    count: i32,
+) -> Result<TargetStatus, RconError> {
+    let command = format!("give {} {} {}", target, item, count);
+    let feedback = client.send(command.to_string())?;
     check_invalid_command(&feedback)?;
-    if feedback.contains("That player does not exist") {
+    if feedback.contains("No player was found") {
         return Ok(TargetStatus::NotFound);
     }
-    if feedback.contains("Player is not whitelisted") {
-        return Ok(TargetStatus::Success(TargetStatusSuccess::Duplicated));
+    if feedback.contains("Invalid name or UUID") {
+        return Err(RconError::UnknownParserError(
+            "Invalid name or UUID".to_string().to_string(),
+        ));
     }
-    if feedback.contains("Removed") {
+    if feedback.contains("Gave") {
         return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
     }
+    if feedback.contains("Unknown item") {
+        return Err(RconError::UnknownParserError(
+            "Unknown item".to_string().to_string(),
+        ));
+    }
     Err(RconError::UnknownParserError(
-        format!(
-            "Unknown error when removing player {} from the whitelist.",
-            player
-        )
-        .to_string(),
+        format!("Unknown error when {} {} {}", target, item, count).to_string(),
     ))
 }
