@@ -9,7 +9,7 @@ env:
 
 jobs:
   testing-1-12-2:
-    runs-on: macos-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v6
 
