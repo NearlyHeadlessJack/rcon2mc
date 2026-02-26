@@ -16,7 +16,7 @@ jobs:
         run: |
           docker pull ghcr.io/nearlyheadlessjack/mc-test:26.1.10
           docker run -d --name mc-test --network host ghcr.io/nearlyheadlessjack/mc-test:26.1.10
-          sleep 5
+          sleep 5s
 
       - name: Run Tests
         run: |
