@@ -1,0 +1,17 @@
+name: publish-workflow.yml
+on:
+  push:
+    paths:
+      - .github/workflows/**
+      - src/**
+      - tests/**
+      - Cargo.toml
+      - Cargo.lock
+
+
+
+jobs:
+  testing:
+    uses: ./.github/workflows/test-workflow.yml
+    name:  Testing
+

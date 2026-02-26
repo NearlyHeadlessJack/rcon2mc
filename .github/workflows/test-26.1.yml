@@ -1,0 +1,20 @@
+name: test-26.1.yml
+on:
+  workflow_call:
+env:
+  GITHUB_ACTIONS: true
+
+jobs:
+  testing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Docker
+        run: |
+          docker pull ghcr.io/nearlyheadlessjack/mc-test:26.1.10
+          docker run -d --name mc-test -p 25575:25575 ghcr.io/nearlyheadlessjack/mc-test:26.1.10
+
+      - name: Run Tests
+        run: |
+          cargo test -- --test-threads=1 --verbose
