@@ -39,6 +39,9 @@ pub fn whitelist_remove(client: &mut RconClient, player: &str) -> Result<TargetS
     if feedback.contains("Player is not whitelisted") {
         return Ok(TargetStatus::Success(TargetStatusSuccess::Duplicated));
     }
+    if feedback.contains("Could not remove") {
+        return Ok(TargetStatus::Success(TargetStatusSuccess::Duplicated));
+    }
     if feedback.contains("Removed") {
         return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
     }

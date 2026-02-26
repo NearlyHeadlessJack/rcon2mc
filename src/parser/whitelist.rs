@@ -35,6 +35,10 @@ pub fn whitelist(client: &mut RconClient) -> Result<Option<PlayerList>, RconErro
     if feedback.contains("There are no whitelisted players") {
         return Ok(None);
     }
+    if feedback.contains("There are 0 (") {
+        return Ok(None);
+    }
+
     let player_list = feedback
         .trim_whitespace()?
         .trim_linebreak()?

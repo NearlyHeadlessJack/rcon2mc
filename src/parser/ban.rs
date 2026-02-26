@@ -113,6 +113,10 @@ pub fn pardon(client: &mut RconClient, target: &str) -> Result<TargetStatus, Rco
     if feedback.contains("Nothing changed.") {
         return Ok(TargetStatus::Success(TargetStatusSuccess::Duplicated));
     }
+    // 1.12.2
+    if feedback.contains("Could not unban player") {
+        return Ok(TargetStatus::Success(TargetStatusSuccess::Duplicated));
+    }
     if feedback.contains("Unbanned") {
         return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
     }
@@ -177,6 +181,10 @@ pub fn kick(
     if feedback.contains("No player was found") {
         return Ok(TargetStatus::NotFound);
     }
+    // 1.12.2
+    if feedback.contains("cannot be found") {
+        return Ok(TargetStatus::NotFound);
+    }
     if feedback.contains("Kicked") {
         return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
     }
@@ -191,6 +199,10 @@ pub fn kill(client: &mut RconClient, target: &str) -> Result<TargetStatus, RconE
     let feedback = client.send(command.to_string())?;
     check_invalid_command(&feedback)?;
     if feedback.contains("No entity was found") {
+        return Ok(TargetStatus::NotFound);
+    }
+    // 1.12.2
+    if feedback.contains("cannot be found") {
         return Ok(TargetStatus::NotFound);
     }
     if feedback.contains("Killed") {

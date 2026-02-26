@@ -38,6 +38,10 @@ pub fn msg(
     if feedback.contains("No player was found") {
         return Ok(TargetStatus::NotFound);
     }
+    // 1.12.2
+    if feedback.contains("cannot be found") {
+        return Ok(TargetStatus::NotFound);
+    }
     if feedback.contains("You whisper to") {
         return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
     }
@@ -71,6 +75,10 @@ pub fn title(
     let feedback = client.send(command.to_string())?;
     check_invalid_command(&feedback)?;
     if feedback.contains("No player was found") {
+        return Ok(TargetStatus::NotFound);
+    }
+    // 1.12.2
+    if feedback.contains("cannot be found") {
         return Ok(TargetStatus::NotFound);
     }
     if feedback.contains("Showing new") {

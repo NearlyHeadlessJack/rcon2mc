@@ -56,6 +56,10 @@ pub fn tp(
     if feedback.contains("No entity was found") {
         return Ok(TargetStatus::NotFound);
     }
+    // 1.12.2
+    if feedback.contains("cannot be found") {
+        return Ok(TargetStatus::NotFound);
+    }
     if feedback.contains("Teleported") {
         return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
     }

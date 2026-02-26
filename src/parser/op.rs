@@ -42,6 +42,11 @@ pub fn op(client: &mut RconClient, player: &str) -> Result<TargetStatus, RconErr
     if feedback.contains("Made") {
         return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
     }
+    // 1.12.2
+    if feedback.contains("Opped") {
+        return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
+    }
+
     Err(RconError::UnknownParserError(
         format!("Unknown error when op player {}.", player).to_string(),
     ))
@@ -58,7 +63,13 @@ pub fn deop(client: &mut RconClient, player: &str) -> Result<TargetStatus, RconE
     if feedback.contains("Nothing changed.") {
         return Ok(TargetStatus::Success(TargetStatusSuccess::Duplicated));
     }
+    if feedback.contains("Could not de-op") {
+        return Ok(TargetStatus::Success(TargetStatusSuccess::Duplicated));
+    }
     if feedback.contains("no longer a server operator") {
+        return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
+    }
+    if feedback.contains("De-opped") {
         return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
     }
     Err(RconError::UnknownParserError(

@@ -47,6 +47,10 @@ pub fn difficulty(client: &mut RconClient, difficulty_name: &str) -> Result<(), 
     if feedback.contains("The difficulty has been set") {
         return Ok(());
     }
+    // 1.12.2
+    if feedback.contains("Set game difficulty to") {
+        return Ok(());
+    }
     Err(RconError::UnknownParserError(
         format!(
             "Unknown error when change difficulty to {}.",
@@ -68,6 +72,10 @@ pub fn weather(client: &mut RconClient, weather_name: &str) -> Result<(), RconEr
     if feedback.contains("Set the weather to") {
         return Ok(());
     }
+    if feedback.contains("Changing to") {
+        return Ok(());
+    }
+
     Err(RconError::UnknownParserError(
         format!("Unknown error when set weather to {}.", weather_name).to_string(),
     ))

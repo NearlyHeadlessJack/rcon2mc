@@ -39,6 +39,9 @@ pub fn give(
     if feedback.contains("No player was found") {
         return Ok(TargetStatus::NotFound);
     }
+    if feedback.contains("cannot be found") {
+        return Ok(TargetStatus::NotFound);
+    }
     if feedback.contains("Invalid name or UUID") {
         return Err(RconError::UnknownParserError(
             "Invalid name or UUID".to_string().to_string(),

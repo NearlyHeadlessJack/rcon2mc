@@ -38,23 +38,29 @@ pub fn get_rcon() -> Option<Result<RconClient, rcon2mc::error::RconError>> {
     Some(rcon)
 }
 
-pub fn is_not_available(current_version:&str)-> bool{
-    if std::env::var("RCON_TEST_MC_VERSION").is_err(){return true;}
-    let Some(cur) = parse_version(current_version)else{return true;};
-    let Some(mc_v) = parse_version(&std::env::var("RCON_TEST_MC_VERSION").unwrap())else { return true; };
-    match compare_versions(&cur,&mc_v) {
+pub fn is_not_available(current_version: &str) -> bool {
+    if std::env::var("RCON_TEST_MC_VERSION").is_err() {
+        return true;
+    }
+    let Some(cur) = parse_version(current_version) else {
+        return true;
+    };
+    let Some(mc_v) = parse_version(&std::env::var("RCON_TEST_MC_VERSION").unwrap()) else {
+        return true;
+    };
+    match compare_versions(&cur, &mc_v) {
         Ordering::Equal => false,
         Ordering::Less => false,
         Ordering::Greater => true,
     }
-
 }
 
 fn get_env() -> bool {
     return std::env::var("RCON_TEST_PART").is_ok();
 }
 fn parse_version(version: &str) -> Option<Vec<u32>> {
-    version.split('.')
+    version
+        .split('.')
         .map(|part| part.parse::<u32>().ok())
         .collect()
 }
