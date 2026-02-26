@@ -16,6 +16,8 @@ exclude = ["target/", "examples/", "tests/",".github/","test/","src/bin/"]
 rand = "0.9.2"
 thiserror = "2.0.18"
 
+
+
 [lib]
 name = "rcon2mc"
 path = "src/lib.rs"
