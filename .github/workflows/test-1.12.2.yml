@@ -8,8 +8,8 @@ env:
   RUST_BACKTRACE: "1"
 
 jobs:
-  testing:
-    runs-on: ubuntu-22.04
+  testing-1-12-2:
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v6
 
