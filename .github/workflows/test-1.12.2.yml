@@ -17,7 +17,7 @@ jobs:
         run: |
           docker pull ghcr.io/nearlyheadlessjack/mc-test:1.12.2.3
           docker run -d --name mc-test --network host ghcr.io/nearlyheadlessjack/mc-test:1.12.2.3
-          sleep 15s
+          sleep 35s
 
       - name: Run Rcon Connection Test
         run: |
