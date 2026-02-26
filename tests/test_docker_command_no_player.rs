@@ -41,7 +41,7 @@ fn test_docker_command_whitelist_add_not_found() {
         .command()
         .whitelist_add("NOFbieufwbe3i32fdSWEATER99992f")
         .expect("whitelist add command push fail");
-
+    dbg!(&feedback);
     assert_eq!(feedback, TargetStatus::NotFound)
 }
 
@@ -58,7 +58,7 @@ fn test_docker_command_kill_none() {
         .command()
         .kill("Steve")
         .expect("kill command push fail");
-
+    dbg!(&feedback);
     assert_eq!(feedback, TargetStatus::NotFound)
 }
 
@@ -75,7 +75,7 @@ fn test_docker_command_kick_none() {
         .command()
         .kick("Steve", Some("no reason"))
         .expect("kick command push fail");
-
+    dbg!(&feedback);
     assert_eq!(feedback, TargetStatus::NotFound)
 }
 
@@ -92,7 +92,7 @@ fn test_docker_command_give_none() {
         .command()
         .give("Steve", "minecraft:torch", 1)
         .expect("give command push fail");
-
+    dbg!(&feedback);
     assert_eq!(feedback, TargetStatus::NotFound)
 }
 
@@ -109,7 +109,7 @@ fn test_docker_command_msg_none() {
         .command()
         .msg("Steve", "my msg")
         .expect("msg / w / tell command push fail");
-
+    dbg!(&feedback);
     assert_eq!(feedback, TargetStatus::NotFound)
 }
 
@@ -123,7 +123,7 @@ fn test_docker_command_say_none() {
         return;
     };
     let feedback = rcon.command().say("my msg").expect("say command push fail");
-
+    dbg!(&feedback);
     assert_eq!(feedback, ())
 }
 
@@ -140,7 +140,7 @@ fn test_docker_command_title_none() {
         .command()
         .title("Steve", "title", "my msg")
         .expect("title command push fail");
-
+    dbg!(&feedback);
     assert_eq!(feedback, TargetStatus::NotFound)
 }
 
@@ -157,7 +157,7 @@ fn test_docker_command_tp_none() {
         .command()
         .tp("Steve", 1.0, 1.0, 0.0)
         .expect("tp command push fail");
-
+    dbg!(&feedback);
     assert_eq!(feedback, TargetStatus::NotFound)
 }
 
@@ -178,7 +178,7 @@ fn test_docker_command_transfer_none() {
         .command()
         .transfer("192.168.1.1", "25565", "Steve")
         .expect("transfer command push fail");
-
+    dbg!(&feedback);
     assert_eq!(feedback, TargetStatus::NotFound)
 }
 
@@ -195,7 +195,7 @@ fn test_docker_command_weather_none() {
         .command()
         .weather("clear")
         .expect("weather command push fail");
-
+    dbg!(&feedback);
     assert_eq!(feedback, ())
 }
 
@@ -212,7 +212,7 @@ fn test_docker_command_difficulty_none() {
         .command()
         .difficulty("easy")
         .expect("difficulty command push fail");
-
+    dbg!(&feedback);
     assert_eq!(feedback, ())
 }
 
@@ -229,7 +229,7 @@ fn test_docker_command_ban_none() {
         .command()
         .ban("zi_min", Some("no reason"))
         .expect("ban command push fail");
-
+    dbg!(&feedback);
     assert_eq!(
         feedback,
         TargetStatus::Success(TargetStatusSuccess::Success)
@@ -246,6 +246,7 @@ fn test_docker_command_ban_none() {
         .command()
         .ban("zi_min", Some("no reason"))
         .expect("ban command push fail");
+    dbg!(&feedback);
     assert_eq!(
         feedback,
         TargetStatus::Success(TargetStatusSuccess::Duplicated)
@@ -262,6 +263,7 @@ fn test_docker_command_ban_none() {
         .command()
         .pardon("zi_min")
         .expect("ban command push fail");
+    dbg!(&feedback);
     assert_eq!(
         feedback,
         TargetStatus::Success(TargetStatusSuccess::Success)
@@ -278,6 +280,7 @@ fn test_docker_command_ban_none() {
         .command()
         .pardon("zi_min")
         .expect("ban command push fail");
+    dbg!(&feedback);
     assert_eq!(
         feedback,
         TargetStatus::Success(TargetStatusSuccess::Duplicated)
@@ -297,7 +300,7 @@ fn test_docker_command_whitelist_operation_none() {
         .command()
         .whitelist()
         .expect("whitelist command push fail");
-
+    dbg!(&feedback);
     assert_eq!(feedback, None);
 
     let Some(rcon) = utils::rcon::get_rcon() else {
@@ -311,7 +314,7 @@ fn test_docker_command_whitelist_operation_none() {
         .command()
         .whitelist_add("zi_min")
         .expect("whitelist command push fail");
-
+    dbg!(&feedback);
     assert_eq!(
         feedback,
         TargetStatus::Success(TargetStatusSuccess::Success)
@@ -328,6 +331,7 @@ fn test_docker_command_whitelist_operation_none() {
         .command()
         .whitelist_add("zi_min")
         .expect("whitelist command push fail");
+    dbg!(&feedback);
     assert_eq!(
         feedback,
         TargetStatus::Success(TargetStatusSuccess::Duplicated)
@@ -344,6 +348,7 @@ fn test_docker_command_whitelist_operation_none() {
         .command()
         .whitelist_remove("zi_min")
         .expect("whitelist command push fail");
+    dbg!(&feedback);
     assert_eq!(
         feedback,
         TargetStatus::Success(TargetStatusSuccess::Success)
@@ -360,6 +365,7 @@ fn test_docker_command_whitelist_operation_none() {
         .command()
         .whitelist_remove("zi_min")
         .expect("whitelist command push fail");
+    dbg!(&feedback);
     assert_eq!(
         feedback,
         TargetStatus::Success(TargetStatusSuccess::Duplicated)
@@ -376,7 +382,7 @@ fn test_docker_command_op_none() {
         return;
     };
     let feedback = rcon.command().op("zi_min").expect("op command push fail");
-
+    dbg!(&feedback);
     assert_eq!(
         feedback,
         TargetStatus::Success(TargetStatusSuccess::Success)
@@ -390,6 +396,7 @@ fn test_docker_command_op_none() {
         return;
     };
     let feedback = rcon.command().op("zi_min").expect("op command push fail");
+    dbg!(&feedback);
     assert_eq!(
         feedback,
         TargetStatus::Success(TargetStatusSuccess::Duplicated)
@@ -403,6 +410,7 @@ fn test_docker_command_op_none() {
         return;
     };
     let feedback = rcon.command().deop("zi_min").expect("op command push fail");
+    dbg!(&feedback);
     assert_eq!(
         feedback,
         TargetStatus::Success(TargetStatusSuccess::Success)
@@ -416,6 +424,7 @@ fn test_docker_command_op_none() {
         return;
     };
     let feedback = rcon.command().deop("zi_min").expect("op command push fail");
+    dbg!(&feedback);
     assert_eq!(
         feedback,
         TargetStatus::Success(TargetStatusSuccess::Duplicated)
