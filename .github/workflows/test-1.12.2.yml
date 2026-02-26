@@ -17,10 +17,10 @@ jobs:
         run: |
           docker pull ghcr.io/nearlyheadlessjack/mc-test:1.12.2.0
           docker run -d --name mc-test --network host ghcr.io/nearlyheadlessjack/mc-test:1.12.2.0
-          sleep 8
+          sleep 12
 
       - name: Run Rcon Connection Test
         run: |
           cargo test --test test_docker_rcon_connection -- --test-threads=1
-          
+          cargo test  -- --test-threads=1 --nocapture
           
