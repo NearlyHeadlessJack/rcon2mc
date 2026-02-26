@@ -23,17 +23,16 @@
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
 use crate::error::RconError;
-use crate::parser::utils::check_invalid_command;
-use crate::parser::utils::StringProcessor;
+use crate::parser::utils::{check_invalid_argument, check_invalid_command};
 use crate::rcon_client::RconClient;
-use crate::rcon_client::{PlayerList, TargetStatus, TargetStatusSuccess};
+use crate::rcon_client::{TargetStatus, TargetStatusSuccess};
 
 pub fn msg(
     client: &mut RconClient,
     target: &str,
     message: &str,
 ) -> Result<TargetStatus, RconError> {
-    let command = format!("msg {} {}", target, message);
+    let command = format!("msg {} \"{}\"", target, message);
     let feedback = client.send(command.to_string())?;
     check_invalid_command(&feedback)?;
     if feedback.contains("No player was found") {
@@ -48,7 +47,7 @@ pub fn msg(
 }
 
 pub fn say(client: &mut RconClient, message: &str) -> Result<(), RconError> {
-    let command = format!("say {}", message);
+    let command = format!("say \"{}\"", message);
     let feedback = client.send(command.to_string())?;
     check_invalid_command(&feedback)?;
     if feedback != " ".to_string() {
@@ -65,18 +64,10 @@ pub fn title(
     title_type: &str,
     title_msg: &str,
 ) -> Result<TargetStatus, RconError> {
-    let mut t_type = "title".to_string();
-    match title_type {
-        "title" => t_type = "title".to_string(),
-        "subtitle" => t_type = "subtitle".to_string(),
-        "actionbar" => t_type = "actionbar".to_string(),
-        _ => {
-            return Err(RconError::UnknownParserError(
-                format!("Unknown title type {}.", title_type).to_string(),
-            ))
-        }
-    }
-    let command = format!("title {} {} {}", target, t_type, title_msg);
+    let arguments = vec!["title", "subtitle", "actionbar"];
+    check_invalid_argument(title_type, arguments)?;
+
+    let command = format!("title {} {} \"{}\"", target, title_type, title_msg);
     let feedback = client.send(command.to_string())?;
     check_invalid_command(&feedback)?;
     if feedback.contains("No player was found") {
@@ -86,6 +77,10 @@ pub fn title(
         return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
     }
     Err(RconError::UnknownParserError(
-        format!("Unknown error when {} {} to {}.", t_type, title_msg, target).to_string(),
+        format!(
+            "Unknown error when {} {} to {}.",
+            title_type, title_msg, target
+        )
+        .to_string(),
     ))
 }

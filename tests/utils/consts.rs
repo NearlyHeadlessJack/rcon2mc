@@ -27,7 +27,7 @@ use std::env::VarError;
 const CI_TEST_HOST: &str = "127.0.0.1";
 const TEST_PORT: u32 = 25575;
 const TEST_PASSWORD: &str = "password";
-const LOCAL_TEST_HOST: &str = "cd.rjack.cn";
+const LOCAL_TEST_HOST: &str = "192.168.5.28";
 
 pub(crate) fn host() -> String {
     if is_github_ci() {

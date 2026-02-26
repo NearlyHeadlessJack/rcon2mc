@@ -26,9 +26,6 @@ use rcon2mc::rcon_client::RconClient;
 mod utils;
 #[test]
 fn test_docker_correct_password() {
-    if get_env() {
-        return;
-    }
     let rcon = RconClient::builder()
         .host(utils::consts::host())
         .port(utils::consts::port())
@@ -39,9 +36,6 @@ fn test_docker_correct_password() {
 
 #[test]
 fn test_docker_incorrect_password() {
-    if get_env() {
-        return;
-    }
     use rcon2mc::error::RconError;
     let mut password = utils::consts::password().clone();
     password.pop();
@@ -51,8 +45,4 @@ fn test_docker_incorrect_password() {
         .password(password)
         .build();
     assert!(matches!(rcon, Err(RconError::IncorrectPasswordError)))
-}
-
-fn get_env() -> bool {
-    return std::env::var("RCON_TEST_PART").is_ok();
 }

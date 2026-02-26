@@ -25,14 +25,13 @@
 
 use crate::error::RconError;
 use crate::parser::utils::check_invalid_command;
-use crate::parser::utils::StringProcessor;
 use crate::rcon_client::RconClient;
 use crate::rcon_client::{TargetStatus, TargetStatusSuccess};
 
 pub fn whitelist_add(client: &mut RconClient, player: &str) -> Result<TargetStatus, RconError> {
     let command = format!("whitelist add {}", player);
 
-    let mut feedback = client.send(command.to_string())?;
+    let feedback = client.send(command.to_string())?;
     check_invalid_command(&feedback)?;
     if feedback.contains("That player does not exist") {
         return Ok(TargetStatus::NotFound);

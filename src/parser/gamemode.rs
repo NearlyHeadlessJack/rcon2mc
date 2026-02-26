@@ -24,10 +24,9 @@
  */
 
 use crate::error::RconError;
-use crate::parser::utils::StringProcessor;
 use crate::parser::utils::{check_invalid_argument, check_invalid_command};
 use crate::rcon_client::RconClient;
-use crate::rcon_client::{PlayerList, TargetStatus, TargetStatusSuccess};
+use crate::rcon_client::{TargetStatus, TargetStatusSuccess};
 
 pub fn gamemode(
     client: &mut RconClient,

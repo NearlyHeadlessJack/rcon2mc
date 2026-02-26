@@ -50,8 +50,6 @@ pub fn save(client: &mut RconClient, save_type: &str) -> Result<(), RconError> {
             check_invalid_command(&feedback)?;
             Ok(())
         }
-        _ => {
-            return Err(RconError::InvalidCommandError);
-        }
+        _ => Err(RconError::InvalidCommandError),
     }
 }

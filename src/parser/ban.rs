@@ -29,14 +29,13 @@ use crate::parser::utils::StringProcessor;
 use crate::rcon_client::RconClient;
 use crate::rcon_client::{PlayerList, TargetStatus, TargetStatusSuccess};
 
-#[deprecated]
 pub fn banlist(client: &mut RconClient) -> Result<Option<PlayerList>, RconError> {
     let mut feedback = client.send("banlist".to_string())?;
     check_invalid_command(&feedback)?;
     if feedback.contains("There are no bans") {
         return Ok(None);
     }
-    let mut player_list = feedback.locate_to_useful_content("ban(s):")?.segment(".")?;
+    let player_list = feedback.locate_to_useful_content("ban(s):")?.segment(".")?;
     let count = player_list.len();
     if count == 0 {
         return Ok(None);

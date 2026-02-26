@@ -327,9 +327,21 @@ impl CommandExecutor {
     ///
     /// // Save all data immediately
     /// client.command().save("all").expect("save-all failed");
+    /// let mut client = RconClient::builder()
+    ///     .host("localhost".to_string())
+    ///     .port(25575)
+    ///     .password("password".to_string())
+    ///     .build()
+    ///     .expect("failed to connect");
     ///
     /// // Disable auto‑save to copy world files
     /// client.command().save("off").expect("save-off failed");
+    /// let mut client = RconClient::builder()
+    ///     .host("localhost".to_string())
+    ///     .port(25575)
+    ///     .password("password".to_string())
+    ///     .build()
+    ///     .expect("failed to connect");
     /// // ... copy world directory ...
     /// client.command().save("on").expect("save-on failed");
     /// ```
@@ -807,50 +819,51 @@ impl CommandExecutor {
 
     /// Changes the difficulty level of the Minecraft server.
     ///
-    /// This function sends the `difficulty <difficulty>` command to the server via RCON,
-    /// parses the server's response, and returns a [`TargetStatus`] indicating the result
-    /// of the operation. The server may report that the difficulty was successfully changed,
-    /// that the difficulty was already set to the requested value (no change), or that the
-    /// provided difficulty argument is incorrect.
+    /// This function sends the `/difficulty <difficulty>` command to the server via RCON.
+    /// It sets the game's difficulty to the specified level. If the difficulty is already
+    /// set to the requested value, the server may report that nothing changed, but this
+    /// function still returns `Ok(())`.
     ///
     /// # Arguments
     ///
     /// * `difficulty_name` – The desired difficulty level. Must be one of the following
-    ///   strings (case‑sensitive, lowercase): `"peaceful"`, `"easy"`, `"normal"`, or `"hard"`.
+    ///   strings (case‑sensitive, lowercase):
+    ///   - `"peaceful"`
+    ///   - `"easy"`
+    ///   - `"normal"`
+    ///   - `"hard"`
     ///
     /// # Returns
     ///
-    /// * `Ok(TargetStatus::Success(TargetStatusSuccess::Success))` – The difficulty was
-    ///   successfully changed to the requested value (it was different before).
-    /// * `Ok(TargetStatus::Success(TargetStatusSuccess::Duplicated))` – The difficulty was
-    ///   already set to the requested value; the operation had no effect.
-    /// * `Ok(TargetStatus::NotFound)` – The server responded with “Incorrect argument for
-    ///   command”, indicating that the provided difficulty name is not recognized or is
-    ///   invalid for the current server version.
-    /// * `Err(RconError)` – An error occurred during the RCON communication or while parsing
-    ///   the response. This includes connection issues, authentication failure, an invalid
-    ///   command response, or an unexpected server reply.
+    /// * `Ok(())` – The command was successfully processed by the server. This includes
+    ///   both the case where the difficulty was actually changed and the case where it
+    ///   was already set to the requested value (the server indicates “did not change”).
     ///
     /// # Errors
     ///
     /// This function will return an error in the following situations:
-    /// - The `difficulty_name` is not one of the four allowed values (before sending the
-    ///   command, the function performs a basic validation and returns
-    ///   [`RconError::UnknownParserError`] with an explanatory message).
-    /// - The RCON connection fails or times out.
-    /// - The server returns an “Unknown or incomplete command” response,
-    ///   indicating that the `difficulty` command is not available or the server
-    ///   is in an unexpected state.
-    /// - The server's response does not match any of the expected patterns
-    ///   (e.g., due to a change in Minecraft's message format), resulting in an
-    ///   [`RconError::UnknownParserError`].
-    /// - Any underlying I/O or protocol error during the RCON exchange.
+    ///
+    /// * **Invalid argument** – The provided `difficulty_name` is not one of the four
+    ///   allowed values. In this case, [`RconError::InvalidCommandArgument`] is returned
+    ///   with a message listing the valid options. This check is performed locally before
+    ///   any network communication.
+    /// * **RCON communication failure** – Connection problems, timeouts, authentication
+    ///   issues, or I/O errors are reported as variants of [`RconError`].
+    /// * **Unknown server command** – If the server responds with “Unknown or incomplete
+    ///   command”, [`RconError::InvalidCommandError`] is returned. This may happen if the
+    ///   server does not support the `difficulty` command (unlikely in modern Minecraft).
+    /// * **Server‑side argument rejection** – If the server rejects the difficulty name
+    ///   (e.g., due to a version mismatch), it may reply with “Incorrect argument for
+    ///   command”. This is mapped to [`RconError::UnknownParserError`] with a descriptive
+    ///   message.
+    /// * **Unexpected server response** – If the server's reply does not match any of the
+    ///   expected patterns (e.g., due to a change in Minecraft's message format), an
+    ///   [`RconError::UnknownParserError`] is returned.
     ///
     /// # Example
     ///
     /// ```no_run
     /// use rcon2mc::rcon_client::RconClient;
-    /// use rcon2mc::rcon_client::{TargetStatus, TargetStatusSuccess};
     ///
     /// let mut client = RconClient::builder()
     ///     .host("localhost".to_string())
@@ -860,23 +873,15 @@ impl CommandExecutor {
     ///     .expect("failed to connect");
     ///
     /// match client.command().difficulty("hard") {
-    ///     Ok(TargetStatus::Success(TargetStatusSuccess::Success)) => {
-    ///         println!("Difficulty changed to hard.");
-    ///     }
-    ///     Ok(TargetStatus::Success(TargetStatusSuccess::Duplicated)) => {
-    ///         println!("Difficulty was already hard.");
-    ///     }
-    ///     Ok(TargetStatus::NotFound) => {
-    ///         println!("Invalid difficulty argument (server rejected it).");
-    ///     }
+    ///     Ok(()) => println!("Difficulty set to hard (or was already hard)."),
     ///     Err(e) => eprintln!("Error changing difficulty: {}", e),
     /// }
     /// ```
     ///
-    /// [`TargetStatus`]: crate::rcon_client::TargetStatus
-    /// [`TargetStatusSuccess`]: crate::rcon_client::TargetStatusSuccess
+    /// [`RconError::InvalidCommandArgument`]: crate::error::RconError::InvalidCommandArgument
+    /// [`RconError::InvalidCommandError`]: crate::error::RconError::InvalidCommandError
     /// [`RconError::UnknownParserError`]: crate::error::RconError::UnknownParserError
-    pub fn difficulty(&mut self, difficulty_name: &str) -> Result<TargetStatus, RconError> {
+    pub fn difficulty(&mut self, difficulty_name: &str) -> Result<(), RconError> {
         use crate::parser::difficulty::difficulty;
         difficulty(&mut self.client, difficulty_name)
     }
@@ -940,6 +945,9 @@ impl CommandExecutor {
     ///     Ok(TargetStatus::NotFound) => {
     ///         println!("Player Steve does not exist.");
     ///     }
+    ///     Ok(TargetStatus::Success(TargetStatusSuccess::Duplicated)) => {
+    ///     println!("Error giving item");
+    ///      }
     ///     Err(e) => eprintln!("Error giving item: {}", e),
     /// }
     /// ```
@@ -1028,6 +1036,13 @@ impl CommandExecutor {
     ///     Err(e) => eprintln!("Error changing game mode: {}", e),
     /// }
     ///
+    ///
+    /// let mut client = RconClient::builder()
+    ///     .host("localhost".to_string())
+    ///     .port(25575)
+    ///     .password("password".to_string())
+    ///     .build()
+    ///     .expect("failed to connect");
     /// // Change game mode for all online players
     /// match client.command().gamemode("adventure", None) {
     ///     Ok(TargetStatus::Success(TargetStatusSuccess::Success)) => {
@@ -1183,6 +1198,7 @@ impl CommandExecutor {
     ///         println!("Player Steve is not online.");
     ///     }
     ///     Err(e) => eprintln!("Error kicking player: {}", e),
+    ///     _=>eprintln!("Error kicking player"),
     /// }
     /// ```
     ///
@@ -1251,8 +1267,15 @@ impl CommandExecutor {
     /// println!("Player Steve is not online or does not exist.");
     /// }
     /// Err(e) => eprintln!("Error killing player: {}", e),
+    /// _ => eprintln!("Error killing player"),
     /// }
     ///
+    /// let mut client = RconClient::builder()
+    /// .host("localhost".to_string())
+    /// .port(25575)
+    /// .password("password".to_string())
+    /// .build()
+    /// .expect("failed to connect");
     /// // Kill all cows using an entity selector
     /// match client.command().kill("@e[type=minecraft:cow]") {
     /// Ok(TargetStatus::Success(TargetStatusSuccess::Success)) => {
@@ -1262,6 +1285,7 @@ impl CommandExecutor {
     /// println!("No cows found.");
     /// }
     /// Err(e) => eprintln!("Error killing cows: {}", e),
+    /// _ => eprintln!("Error kicking player"),
     /// }
     ///```
     ///
@@ -1451,6 +1475,7 @@ impl CommandExecutor {
     ///         println!("Player Steve is not online.");
     ///     }
     ///     Err(e) => eprintln!("Error sending message: {}", e),
+    ///     _=>eprintln!("Error sending message"),
     /// }
     /// ```
     ///
@@ -1583,6 +1608,7 @@ impl CommandExecutor {
     ///         println!("Player Steve is not online.");
     ///     }
     ///     Err(e) => eprintln!("Error sending title: {}", e),
+    ///     _=>eprintln!("Error sending title"),
     /// }
     /// ```
     ///
@@ -1663,6 +1689,7 @@ impl CommandExecutor {
     ///         println!("Player Steve is not online or does not exist.");
     ///     }
     ///     Err(e) => eprintln!("Error teleporting: {}", e),
+    ///     _=>eprintln!("Error teleporting"),
     /// }
     /// ```
     ///
@@ -1740,6 +1767,7 @@ impl CommandExecutor {
     ///         println!("Player Steve is not online or does not exist.");
     ///     }
     ///     Err(e) => eprintln!("Error transferring player: {}", e),
+    ///     _=>eprintln!("Error transferring player"),
     /// }
     /// ```
     pub fn transfer(

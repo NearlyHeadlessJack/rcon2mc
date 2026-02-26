@@ -27,12 +27,8 @@ use crate::error::RconError;
 use crate::parser::utils::check_invalid_argument;
 use crate::parser::utils::check_invalid_command;
 use crate::rcon_client::RconClient;
-use crate::rcon_client::{TargetStatus, TargetStatusSuccess};
 
-pub fn difficulty(
-    client: &mut RconClient,
-    difficulty_name: &str,
-) -> Result<TargetStatus, RconError> {
+pub fn difficulty(client: &mut RconClient, difficulty_name: &str) -> Result<(), RconError> {
     let arguments = vec!["peaceful", "easy", "normal", "hard"];
     check_invalid_argument(difficulty_name, arguments)?;
 
@@ -41,13 +37,15 @@ pub fn difficulty(
     let feedback = client.send(command.to_string())?;
     check_invalid_command(&feedback)?;
     if feedback.contains("Incorrect argument for command") {
-        return Ok(TargetStatus::NotFound);
+        return Err(RconError::UnknownParserError(
+            "Incorrect argument for command difficulty".to_string(),
+        ));
     }
     if feedback.contains("The difficulty did not change") {
-        return Ok(TargetStatus::Success(TargetStatusSuccess::Duplicated));
+        return Ok(());
     }
     if feedback.contains("The difficulty has been set") {
-        return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
+        return Ok(());
     }
     Err(RconError::UnknownParserError(
         format!(

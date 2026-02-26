@@ -25,9 +25,8 @@
 
 use crate::error::RconError;
 use crate::parser::utils::check_invalid_command;
-use crate::parser::utils::StringProcessor;
 use crate::rcon_client::RconClient;
-use crate::rcon_client::{PlayerList, TargetStatus, TargetStatusSuccess};
+use crate::rcon_client::{TargetStatus, TargetStatusSuccess};
 
 pub fn op(client: &mut RconClient, player: &str) -> Result<TargetStatus, RconError> {
     let command = format!("op {}", player);

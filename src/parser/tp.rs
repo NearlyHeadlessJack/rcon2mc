@@ -25,9 +25,8 @@
 
 use crate::error::RconError;
 use crate::parser::utils::check_invalid_command;
-use crate::parser::utils::StringProcessor;
 use crate::rcon_client::RconClient;
-use crate::rcon_client::{PlayerList, TargetStatus, TargetStatusSuccess};
+use crate::rcon_client::{TargetStatus, TargetStatusSuccess};
 
 pub fn tp(
     client: &mut RconClient,
@@ -36,17 +35,17 @@ pub fn tp(
     y: f64,
     z: f64,
 ) -> Result<TargetStatus, RconError> {
-    if x >= -30000000.0 || x < 30000000.0 {
+    if x < -30000000.0 || x >= 30000000.0 {
         return Err(RconError::InvalidCoordinate(
             "x should be in [-30000000, 30000000)".to_string(),
         ));
     }
-    if z >= -30000000.0 || z < 30000000.0 {
+    if z < -30000000.0 || z >= 30000000.0 {
         return Err(RconError::InvalidCoordinate(
             "z should be in [-30000000, 30000000)".to_string(),
         ));
     }
-    if y > -20000000.0 || y <= 20000000.0 {
+    if y < -20000000.0 || y >= 20000000.0 {
         return Err(RconError::InvalidCoordinate(
             "y should be in [-20000000, 20000000)".to_string(),
         ));
