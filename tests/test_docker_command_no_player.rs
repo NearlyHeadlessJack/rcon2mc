@@ -26,7 +26,6 @@ use rcon2mc::rcon_client::{TargetStatus, TargetStatusSuccess};
 
 mod utils;
 
-
 // #[test]
 // fn test_docker_command_whitelist_add_not_found() {
 //     let Some(rcon) = utils::rcon::get_rcon() else {
