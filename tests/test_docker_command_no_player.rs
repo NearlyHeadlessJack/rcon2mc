@@ -178,6 +178,10 @@ fn test_docker_command_tp_none() {
 
 #[test]
 fn test_docker_command_transfer_none() {
+    use utils::rcon::is_available;
+    if !is_available("1.20.5") {
+        return;
+    }
     let Some(rcon) = utils::rcon::get_rcon() else {
         return;
     };

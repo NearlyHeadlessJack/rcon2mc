@@ -4,6 +4,7 @@ on:
 
 env:
   GITHUB_ACTIONS: true
+  RCON_TEST_MC_VERSION: "1.16.5"
 
 jobs:
   testing:
