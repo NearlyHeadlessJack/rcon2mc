@@ -26,22 +26,7 @@ use rcon2mc::rcon_client::{TargetStatus, TargetStatusSuccess};
 
 mod utils;
 
-#[test]
-fn test_docker_command_whitelist_none() {
-    let Some(rcon) = utils::rcon::get_rcon() else {
-        return;
-    };
-    let Ok(rcon) = rcon else {
-        assert!(false);
-        return;
-    };
-    let feedback = rcon
-        .command()
-        .whitelist()
-        .expect("whitelist command push fail");
 
-    assert_eq!(feedback, None)
-}
 
 #[test]
 fn test_docker_command_whitelist_add_not_found() {
@@ -301,6 +286,20 @@ fn test_docker_command_ban_none() {
 
 #[test]
 fn test_docker_command_whitelist_operation_none() {
+    let Some(rcon) = utils::rcon::get_rcon() else {
+        return;
+    };
+    let Ok(rcon) = rcon else {
+        assert!(false);
+        return;
+    };
+    let feedback = rcon
+        .command()
+        .whitelist()
+        .expect("whitelist command push fail");
+
+    assert_eq!(feedback, None);
+
     let Some(rcon) = utils::rcon::get_rcon() else {
         return;
     };
