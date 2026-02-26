@@ -22,40 +22,70 @@
  * // Author: Jack Wang <wang@rjack.cn>
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
-
 use crate::error::RconError;
+use crate::parser::utils::check_invalid_command;
 use crate::parser::utils::StringProcessor;
-use crate::parser::utils::{check_invalid_argument, check_invalid_command};
 use crate::rcon_client::RconClient;
 use crate::rcon_client::{PlayerList, TargetStatus, TargetStatusSuccess};
 
-pub fn gamemode(
+pub fn msg(
     client: &mut RconClient,
-    gamemode_name: &str,
-    target: Option<&str>,
+    target: &str,
+    message: &str,
 ) -> Result<TargetStatus, RconError> {
-    let arguments = vec!["survival", "creative", "adventure", "spectator"];
-    check_invalid_argument(gamemode_name, arguments)?;
-
-    let command = format!("gamemode {} {}", gamemode_name, target.unwrap_or("@a"));
-
+    let command = format!("msg {} {}", target, message);
     let feedback = client.send(command.to_string())?;
     check_invalid_command(&feedback)?;
     if feedback.contains("No player was found") {
         return Ok(TargetStatus::NotFound);
     }
-    if feedback == " ".to_string() {
-        return Ok(TargetStatus::Success(TargetStatusSuccess::Duplicated));
-    }
-    if feedback.contains("game mode to") {
+    if feedback.contains("You whisper to") {
         return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
     }
     Err(RconError::UnknownParserError(
-        format!(
-            "Unknown error when change player {} gamemode to {}.",
-            target.unwrap_or("@a"),
-            gamemode_name
-        )
-        .to_string(),
+        format!("Unknown error when whisper to player {}.", target).to_string(),
+    ))
+}
+
+pub fn say(client: &mut RconClient, message: &str) -> Result<(), RconError> {
+    let command = format!("say {}", message);
+    let feedback = client.send(command.to_string())?;
+    check_invalid_command(&feedback)?;
+    if feedback != " ".to_string() {
+        return Err(RconError::UnknownParserError(
+            format!("Unknown error when say {}.", message).to_string(),
+        ));
+    }
+    Ok(())
+}
+
+pub fn title(
+    client: &mut RconClient,
+    target: &str,
+    title_type: &str,
+    title_msg: &str,
+) -> Result<TargetStatus, RconError> {
+    let mut t_type = "title".to_string();
+    match title_type {
+        "title" => t_type = "title".to_string(),
+        "subtitle" => t_type = "subtitle".to_string(),
+        "actionbar" => t_type = "actionbar".to_string(),
+        _ => {
+            return Err(RconError::UnknownParserError(
+                format!("Unknown title type {}.", title_type).to_string(),
+            ))
+        }
+    }
+    let command = format!("title {} {} {}", target, t_type, title_msg);
+    let feedback = client.send(command.to_string())?;
+    check_invalid_command(&feedback)?;
+    if feedback.contains("No player was found") {
+        return Ok(TargetStatus::NotFound);
+    }
+    if feedback.contains("Showing new") {
+        return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
+    }
+    Err(RconError::UnknownParserError(
+        format!("Unknown error when {} {} to {}.", t_type, title_msg, target).to_string(),
     ))
 }

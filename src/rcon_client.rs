@@ -36,6 +36,18 @@ pub struct PlayerList {
     pub player_list: Vec<String>,
 }
 
+#[derive(Debug, PartialEq)]
+pub struct PlayerUUIDList {
+    pub count: usize,
+    pub player_list: Vec<PlayerInfo>,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct PlayerInfo {
+    pub player_id: String,
+    pub player_uuid: String,
+}
+
 /// Represents the result of an operation targeting a specific player.
 ///
 /// This enum is used by commands that modify server state related to a player,

@@ -26,8 +26,8 @@
 use crate::error::RconError;
 use crate::parser::utils::check_invalid_command;
 use crate::parser::utils::StringProcessor;
-use crate::rcon_client::PlayerList;
 use crate::rcon_client::RconClient;
+use crate::rcon_client::{PlayerInfo, PlayerList, PlayerUUIDList};
 
 pub fn whitelist(client: &mut RconClient) -> Result<Option<PlayerList>, RconError> {
     let mut feedback = client.send("whitelist list".to_string())?;
@@ -42,4 +42,83 @@ pub fn whitelist(client: &mut RconClient) -> Result<Option<PlayerList>, RconErro
         .segment(",")?;
     let count = player_list.len();
     Ok(Some(PlayerList { count, player_list }))
+}
+
+pub fn list(client: &mut RconClient) -> Result<Option<PlayerList>, RconError> {
+    let mut feedback = client.send("list".to_string())?;
+    check_invalid_command(&feedback)?;
+    if feedback.contains("There are 0 of") {
+        return Ok(None);
+    }
+    let player_list = feedback
+        .trim_whitespace()?
+        .trim_linebreak()?
+        .locate_to_useful_content("playersonline:")?
+        .segment(",")?;
+    let count = player_list.len();
+    Ok(Some(PlayerList { count, player_list }))
+}
+pub fn list_uuid(client: &mut RconClient) -> Result<Option<PlayerUUIDList>, RconError> {
+    let mut feedback = client.send("list uuids".to_string())?;
+    check_invalid_command(&feedback)?;
+    if feedback.contains("There are 0 of") {
+        return Ok(None);
+    }
+    let player_list = feedback
+        .locate_to_useful_content("players online:")?
+        .trim_linebreak()?
+        .trim_whitespace()?
+        .segment(",")?;
+    let count = player_list.len();
+
+    let player_list = player_list
+        .into_iter()
+        .map(|x| get_id_and_uuid(x.to_string()))
+        .collect::<Result<Vec<PlayerInfo>, RconError>>()?;
+
+    Ok(Some(PlayerUUIDList { count, player_list }))
+}
+
+fn get_id_and_uuid(mut msg: String) -> Result<PlayerInfo, RconError> {
+    let mut msg2 = msg.clone();
+    let player_id = msg.locate_to_useful_content_before("(")?;
+    let player_uuid = msg2
+        .locate_to_useful_content("(")?
+        .locate_to_useful_content_before(")")?;
+    Ok(PlayerInfo {
+        player_id: player_id.to_string(),
+        player_uuid: player_uuid.to_string(),
+    })
+}
+
+#[test]
+fn test_list_uuids() {
+    let mut msg = "There are 1 of a max of 20 players online: ASWATER (ecdddcc3-2f2e-4fd8-b1c3-d6baa858e655), \
+    ASWATER2 (ecdddcc32-2f2e-4fd8-b1c3-d6baa858e655)".to_string();
+    let player_list = msg
+        .locate_to_useful_content("players online:")
+        .unwrap()
+        .trim_linebreak()
+        .unwrap()
+        .trim_whitespace()
+        .unwrap()
+        .segment(",")
+        .unwrap();
+    let player_list = player_list
+        .into_iter()
+        .map(|x| get_id_and_uuid(x.to_string()))
+        .collect::<Result<Vec<PlayerInfo>, RconError>>()
+        .unwrap();
+
+    assert_eq!(player_list.len(), 2);
+    assert_eq!(player_list[0].player_id, "ASWATER");
+    assert_eq!(
+        player_list[0].player_uuid,
+        "ecdddcc3-2f2e-4fd8-b1c3-d6baa858e655"
+    );
+    assert_eq!(player_list[1].player_id, "ASWATER2");
+    assert_eq!(
+        player_list[1].player_uuid,
+        "ecdddcc32-2f2e-4fd8-b1c3-d6baa858e655"
+    );
 }

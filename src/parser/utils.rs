@@ -31,6 +31,18 @@ pub fn check_invalid_command(raw_feedback: &str) -> Result<(), RconError> {
     Ok(())
 }
 
+pub fn check_invalid_argument(input: &str, alternatives: Vec<&str>) -> Result<(), RconError> {
+    for alternative in alternatives.iter() {
+        if input == *alternative {
+            return Ok(());
+        }
+    }
+    let valid_values = alternatives.join(", ");
+    Err(RconError::InvalidCommandArgument(
+        format!("Invalid argument. Choose from: {}", valid_values).to_string(),
+    ))
+}
+
 pub trait StringProcessor {
     fn trim_whitespace(&mut self) -> Result<&mut Self, RconError>;
     fn trim_linebreak(&mut self) -> Result<&mut Self, RconError>;

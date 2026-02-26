@@ -22,39 +22,38 @@
  * // Author: Jack Wang <wang@rjack.cn>
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
-
 use crate::error::RconError;
+use crate::parser::utils::check_invalid_command;
 use crate::parser::utils::StringProcessor;
-use crate::parser::utils::{check_invalid_argument, check_invalid_command};
 use crate::rcon_client::RconClient;
 use crate::rcon_client::{PlayerList, TargetStatus, TargetStatusSuccess};
 
-pub fn gamemode(
+pub fn gamerule(
     client: &mut RconClient,
-    gamemode_name: &str,
-    target: Option<&str>,
-) -> Result<TargetStatus, RconError> {
-    let arguments = vec!["survival", "creative", "adventure", "spectator"];
-    check_invalid_argument(gamemode_name, arguments)?;
-
-    let command = format!("gamemode {} {}", gamemode_name, target.unwrap_or("@a"));
-
+    gamerule_name: &str,
+    value: &str,
+) -> Result<(), RconError> {
+    let command = format!("gamerule {} {}", gamerule_name, value);
     let feedback = client.send(command.to_string())?;
     check_invalid_command(&feedback)?;
-    if feedback.contains("No player was found") {
-        return Ok(TargetStatus::NotFound);
+    if feedback.contains("Incorrect") {
+        return Err(RconError::UnknownParserError(
+            "Incorrect gamerule name".to_string(),
+        ));
     }
-    if feedback == " ".to_string() {
-        return Ok(TargetStatus::Success(TargetStatusSuccess::Duplicated));
+    if feedback.contains("Expected") {
+        return Err(RconError::UnknownParserError(
+            "Incorrect gamerule value".to_string(),
+        ));
     }
-    if feedback.contains("game mode to") {
-        return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
+
+    if feedback.contains("is now set to:") {
+        return Ok(());
     }
     Err(RconError::UnknownParserError(
         format!(
-            "Unknown error when change player {} gamemode to {}.",
-            target.unwrap_or("@a"),
-            gamemode_name
+            "Unknown error when set gamerule {} to {}",
+            gamerule_name, value
         )
         .to_string(),
     ))

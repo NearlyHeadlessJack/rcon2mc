@@ -25,9 +25,12 @@
 pub(crate) mod ban;
 pub mod difficulty;
 pub mod gamemode;
+pub mod gamerule;
 pub mod give;
+pub mod msg;
 pub mod op;
 pub(crate) mod stop;
+pub mod tp;
 mod utils;
 pub(crate) mod whitelist;
 pub(crate) mod whitelist_add;

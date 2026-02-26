@@ -24,29 +24,19 @@
  */
 
 use crate::error::RconError;
+use crate::parser::utils::check_invalid_argument;
 use crate::parser::utils::check_invalid_command;
-use crate::parser::utils::StringProcessor;
 use crate::rcon_client::RconClient;
-use crate::rcon_client::{PlayerList, TargetStatus, TargetStatusSuccess};
+use crate::rcon_client::{TargetStatus, TargetStatusSuccess};
 
 pub fn difficulty(
     client: &mut RconClient,
     difficulty_name: &str,
 ) -> Result<TargetStatus, RconError> {
-    let mut diff = String::from("peace");
-    match difficulty_name {
-        "peaceful" => diff = "peaceful".to_string(),
-        "easy" => diff = "easy".to_string(),
-        "normal" => diff = "normal".to_string(),
-        "hard" => diff = "hard".to_string(),
-        _ => {
-            return Err(RconError::UnknownParserError(
-                format!("Unknown difficulty {}.", difficulty_name).to_string(),
-            ))
-        }
-    }
+    let arguments = vec!["peaceful", "easy", "normal", "hard"];
+    check_invalid_argument(difficulty_name, arguments)?;
 
-    let command = format!("difficulty {}", diff);
+    let command = format!("difficulty {}", difficulty_name);
 
     let feedback = client.send(command.to_string())?;
     check_invalid_command(&feedback)?;
@@ -60,6 +50,27 @@ pub fn difficulty(
         return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
     }
     Err(RconError::UnknownParserError(
-        format!("Unknown error when change difficulty to {}.", diff).to_string(),
+        format!(
+            "Unknown error when change difficulty to {}.",
+            difficulty_name
+        )
+        .to_string(),
+    ))
+}
+
+pub fn weather(client: &mut RconClient, weather_name: &str) -> Result<(), RconError> {
+    let arguments = vec!["clear", "rain", "thunder"];
+    check_invalid_argument(weather_name, arguments)?;
+
+    let command = format!("weather {}", weather_name);
+
+    let feedback = client.send(command.to_string())?;
+    check_invalid_command(&feedback)?;
+
+    if feedback.contains("Set the weather to") {
+        return Ok(());
+    }
+    Err(RconError::UnknownParserError(
+        format!("Unknown error when set weather to {}.", weather_name).to_string(),
     ))
 }

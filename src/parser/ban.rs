@@ -163,3 +163,41 @@ fn test_banlist_segment() {
         .unwrap();
     assert_eq!(player_list, vec!["ASWATER", "Zi_Min"]);
 }
+
+pub fn kick(
+    client: &mut RconClient,
+    player: &str,
+    reason: Option<&str>,
+) -> Result<TargetStatus, RconError> {
+    let reason = reason.unwrap_or("No reason provided.");
+
+    let command = format!("kick {} {}", player, reason);
+
+    let feedback = client.send(command.to_string())?;
+    check_invalid_command(&feedback)?;
+    if feedback.contains("No player was found") {
+        return Ok(TargetStatus::NotFound);
+    }
+    if feedback.contains("Kicked") {
+        return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
+    }
+    Err(RconError::UnknownParserError(
+        format!("Unknown error when kick player {}.", player).to_string(),
+    ))
+}
+
+pub fn kill(client: &mut RconClient, target: &str) -> Result<TargetStatus, RconError> {
+    let command = format!("kill {}", target);
+
+    let feedback = client.send(command.to_string())?;
+    check_invalid_command(&feedback)?;
+    if feedback.contains("No entity was found") {
+        return Ok(TargetStatus::NotFound);
+    }
+    if feedback.contains("Killed") {
+        return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
+    }
+    Err(RconError::UnknownParserError(
+        format!("Unknown error when kill target {}.", target).to_string(),
+    ))
+}

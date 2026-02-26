@@ -26,11 +26,12 @@
 #![allow(unused)]
 
 use crate::error::RconError;
-use crate::rcon_client::PlayerList;
+use crate::parser::difficulty::weather;
+use crate::parser::tp::transfer;
 use crate::rcon_client::RconClient;
 use crate::rcon_client::TargetStatus;
+use crate::rcon_client::{PlayerList, PlayerUUIDList};
 
-pub enum Gamerule {}
 impl RconClient {
     pub fn command(self) -> CommandExecutor {
         CommandExecutor { client: self }
@@ -1054,55 +1055,760 @@ impl CommandExecutor {
         use crate::parser::gamemode::gamemode;
         gamemode(&mut self.client, mode, target)
     }
-    pub fn gamerule(gamerule: Gamerule, value: &str) -> Result<(), Box<dyn std::error::Error>> {
-        todo!()
-    }
-    pub fn kick(player: &str, reason: Option<&str>) -> Result<i8, Box<dyn std::error::Error>> {
-        todo!()
-    }
-    pub fn kill(target: &str) -> Result<(), Box<dyn std::error::Error>> {
-        todo!()
-    }
-    pub fn list() -> Result<Vec<String>, Box<dyn std::error::Error>> {
-        todo!()
-    }
-    pub fn list_uuid() -> Result<Vec<String>, Box<dyn std::error::Error>> {
-        todo!()
+
+    /// Sets a game rule on the Minecraft server.
+    ///
+    /// This function sends the `/gamerule <name> <value>` command to the server via RCON.
+    /// Game rules control various aspects of gameplay, such as mob griefing, weather cycles,
+    /// or whether players keep inventory after death.
+    ///
+    /// # Arguments
+    ///
+    /// * `gamerule_name` – The name of the game rule to set. Rule names are case‑sensitive.
+    /// * `value` – The new value for the rule. For boolean rules this must be `"true"` or `"false"`;
+    ///             for integer rules it must be a whole number (as a string).
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` – The game rule was successfully updated.
+    /// * `Err(RconError)` – An error occurred. This can be due to:
+    ///   * An invalid game rule name – the server responds with “Incorrect …”
+    ///   * An invalid value for that rule – the server responds with “Expected …”
+    ///   * The `gamerule` command is not available (e.g., server in an unexpected state)
+    ///   * Connection or authentication problems
+    ///   * An unexpected server response (parsing failure)
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error in the following situations:
+    /// - The RCON connection fails or times out.
+    /// - The server returns an “Unknown or incomplete command” response,
+    ///   indicating that the `gamerule` command is not available.
+    /// - The server rejects the rule name (e.g., `gamerule_name` does not exist),
+    ///   in which case [`RconError::UnknownParserError`] is returned with a descriptive message.
+    /// - The server rejects the value (e.g., `value` is not a valid boolean or integer for that rule),
+    ///   also resulting in [`RconError::UnknownParserError`].
+    /// - The server's response cannot be parsed (e.g., due to a change in Minecraft's message format).
+    /// - Any underlying I/O or protocol error during the RCON exchange.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use rcon2mc::rcon_client::RconClient;
+    ///
+    /// let mut client = RconClient::builder()
+    ///     .host("localhost".to_string())
+    ///     .port(25575)
+    ///     .password("secret".to_string())
+    ///     .build()
+    ///     .expect("failed to connect");
+    ///
+    /// // Enable the "keepInventory" rule
+    /// match client.command().gamerule("keepInventory", "true") {
+    ///     Ok(()) => println!("Game rule updated."),
+    ///     Err(e) => eprintln!("Error: {}", e),
+    /// }
+    /// ```
+    ///
+    /// # Notes
+    ///
+    /// * A complete list of available game rules can be found at:
+    ///   - [Minecraft Wiki: Game rule](https://minecraft.wiki/w/Game_rule) (English)
+    ///   - [中文 Minecraft Wiki: 游戏规则](https://zh.minecraft.wiki/w/%E6%B8%B8%E6%88%8F%E8%A7%84%E5%88%99/) (Chinese)
+    /// * **Naming convention:** The way game rule names are written changed in Minecraft version **1.21.11**.
+    ///   Before that version, rule names often used a different format (e.g., `doDaylightCycle` vs. `advance_time`).
+    ///   Please consult the wiki for the correct rule names for your server version.
+    /// * For boolean rules, the allowed values are exactly `"true"` and `"false"`.
+    /// * For integer rules, any whole number is accepted by the server, but extremely high values may affect performance.
+    ///
+    /// [`RconError::UnknownParserError`]: crate::error::RconError::UnknownParserError
+    pub fn gamerule(&mut self, gamerule_name: &str, value: &str) -> Result<(), RconError> {
+        use crate::parser::gamerule::gamerule;
+        gamerule(&mut self.client, gamerule_name, value)
     }
 
-    pub fn tell(target: &str, message: &str) -> Result<(), Box<dyn std::error::Error>> {
-        todo!()
+    /// Kicks a player from the Minecraft server.
+    ///
+    /// This function sends the `kick <player> [reason]` command to the server via RCON,
+    /// parses the server's response, and returns a [`TargetStatus`] indicating the result
+    /// of the operation. The server may report that the player was successfully kicked,
+    /// or that no player was found (i.e., the player is not online).
+    ///
+    /// # Arguments
+    ///
+    /// * `player` – The name of the player to kick or UUID.
+    /// * `reason` – An optional reason for the kick. If `None`, a default reason
+    ///   ("No reason provided.") is sent.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(TargetStatus::Success(TargetStatusSuccess::Success))` – The player was
+    ///   successfully kicked (they were online and removed from the server).
+    /// * `Ok(TargetStatus::NotFound)` – No player with that name was found online
+    ///   (the server responded with "No player was found").
+    /// * `Err(RconError)` – An error occurred during the RCON communication or while
+    ///   parsing the response. This includes connection issues, authentication failure,
+    ///   an invalid command response, or an unexpected server reply.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error in the following situations:
+    /// - The RCON connection fails or times out.
+    /// - The server returns an “Unknown or incomplete command” response,
+    ///   indicating that the `kick` command is not available or the server
+    ///   is in an unexpected state.
+    /// - The server's response does not match any of the expected patterns
+    ///   (e.g., due to a change in Minecraft's message format), resulting in an
+    ///   [`RconError::UnknownParserError`].
+    /// - Any underlying I/O or protocol error during the RCON exchange.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use rcon2mc::rcon_client::RconClient;
+    /// use rcon2mc::rcon_client::{TargetStatus, TargetStatusSuccess};
+    ///
+    /// let mut client = RconClient::builder()
+    ///     .host("localhost".to_string())
+    ///     .port(25575)
+    ///     .password("password".to_string())
+    ///     .build()
+    ///     .expect("failed to connect");
+    ///
+    /// match client.command().kick("Steve", Some("Griefing")) {
+    ///     Ok(TargetStatus::Success(TargetStatusSuccess::Success)) => {
+    ///         println!("Steve kicked.");
+    ///     }
+    ///     Ok(TargetStatus::NotFound) => {
+    ///         println!("Player Steve is not online.");
+    ///     }
+    ///     Err(e) => eprintln!("Error kicking player: {}", e),
+    /// }
+    /// ```
+    ///
+    /// [`TargetStatus`]: crate::rcon_client::TargetStatus
+    /// [`TargetStatusSuccess`]: crate::rcon_client::TargetStatusSuccess
+    /// [`RconError::UnknownParserError`]: crate::error::RconError::UnknownParserError
+    pub fn kick(&mut self, player: &str, reason: Option<&str>) -> Result<TargetStatus, RconError> {
+        use crate::parser::ban::kick;
+        kick(&mut self.client, player, reason)
     }
-    pub fn w(target: &str, message: &str) -> Result<(), Box<dyn std::error::Error>> {
-        todo!()
+
+    /// Kills a target entity (player or other entity) on the Minecraft server.
+    ///
+    /// This function sends the kill <target> command to the server via RCON,
+    /// parses the server's response, and returns a [TargetStatus] indicating the result
+    /// of the operation. The target can be a player name, a UUID, or an entity selector
+    /// (e.g., @e[type=minecraft:cow,limit=1]). The server may report that the target
+    /// was successfully killed, or that no entity was found.
+    ///
+    /// # Arguments
+    ///
+    /// * `target` – The target to kill. This can be a player name, a UUID, or an entity
+    /// selector (e.g., @e, @a, @p, or any valid selector with filters).
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(TargetStatus::Success(TargetStatusSuccess::Success))` – The target entity
+    /// was successfully killed (the server responded with "Killed").
+    /// * `Ok(TargetStatus::NotFound)` – No entity matched the given target (the server
+    /// responded with "No entity was found").
+    /// * `Err(RconError)` – An error occurred during the RCON communication or while
+    /// parsing the response. This includes connection issues, authentication failure,
+    /// an invalid command response, or an unexpected server reply.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error in the following situations:
+    /// - The RCON connection fails or times out.
+    /// - The server returns an “Unknown or incomplete command” response,
+    /// indicating that the kill command is not available or the server
+    /// is in an unexpected state.
+    /// - The server's response does not match any of the expected patterns
+    /// (e.g., due to a change in Minecraft's message format), resulting in an
+    /// [RconError::UnknownParserError].
+    /// - Any underlying I/O or protocol error during the RCON exchange.
+    ///
+    /// # Example
+    ///
+    ///```no_run
+    /// use rcon2mc::rcon_client::RconClient;
+    /// use rcon2mc::rcon_client::{TargetStatus, TargetStatusSuccess};
+    ///
+    /// let mut client = RconClient::builder()
+    /// .host("localhost".to_string())
+    /// .port(25575)
+    /// .password("password".to_string())
+    /// .build()
+    /// .expect("failed to connect");
+    ///
+    /// // Kill a specific player by name
+    /// match client.command().kill("Steve") {
+    /// Ok(TargetStatus::Success(TargetStatusSuccess::Success)) => {
+    /// println!("Steve killed.");
+    /// }
+    /// Ok(TargetStatus::NotFound) => {
+    /// println!("Player Steve is not online or does not exist.");
+    /// }
+    /// Err(e) => eprintln!("Error killing player: {}", e),
+    /// }
+    ///
+    /// // Kill all cows using an entity selector
+    /// match client.command().kill("@e[type=minecraft:cow]") {
+    /// Ok(TargetStatus::Success(TargetStatusSuccess::Success)) => {
+    /// println!("All cows killed.");
+    /// }
+    /// Ok(TargetStatus::NotFound) => {
+    /// println!("No cows found.");
+    /// }
+    /// Err(e) => eprintln!("Error killing cows: {}", e),
+    /// }
+    ///```
+    ///
+    /// [TargetStatus]: crate::rcon_client::TargetStatus
+    /// [TargetStatusSuccess]: crate::rcon_client::TargetStatusSuccess
+    /// [RconError::UnknownParserError]: crate::error::RconError::UnknownParserError
+    pub fn kill(&mut self, target: &str) -> Result<TargetStatus, RconError> {
+        use crate::parser::ban::kill;
+        kill(&mut self.client, target)
     }
-    pub fn msg(target: &str, message: &str) -> Result<(), Box<dyn std::error::Error>> {
-        todo!()
+
+    /// Retrieves the list of players currently online on the Minecraft server.
+    ///
+    /// This function sends the `list` command to the server via RCON, parses the
+    /// response, and returns a [`PlayerList`] containing the count and names of
+    /// online players. If no players are online, `None` is returned.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Some(PlayerList))` – Successfully retrieved the online player list.
+    ///   The [`PlayerList`] struct contains:
+    ///   - `count` – The number of online players.
+    ///   - `player_list` – A vector of player names (as `String`).
+    /// * `Ok(None)` – The server indicated that there are no players online.
+    /// * `Err(RconError)` – An error occurred during the RCON communication or
+    ///   while parsing the response. Possible errors include connection issues,
+    ///   authentication failure, or an invalid command response.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error in the following situations:
+    /// - The RCON connection fails or times out.
+    /// - The server returns an “Unknown or incomplete command” response,
+    ///   indicating that the `list` command is not available or the server
+    ///   is in an unexpected state.
+    /// - The response cannot be parsed into a valid player list.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use rcon2mc::rcon_client::RconClient;
+    ///
+    /// let mut client = RconClient::builder()
+    ///     .host("localhost".to_string())
+    ///     .port(25575)
+    ///     .password("password".to_string())
+    ///     .build()
+    ///     .expect("failed to connect");
+    ///
+    /// match client.command().list() {
+    ///     Ok(Some(players)) => {
+    ///         println!("Online players ({}): {:?}", players.count, players.player_list);
+    ///     }
+    ///     Ok(None) => println!("No players are online."),
+    ///     Err(e) => eprintln!("Error retrieving online players: {}", e),
+    /// }
+    /// ```
+    ///
+    /// [`PlayerList`]: crate::rcon_client::PlayerList
+    pub fn list(&mut self) -> Result<Option<PlayerList>, RconError> {
+        use crate::parser::whitelist::list;
+        list(&mut self.client)
     }
+
+    /// Retrieves the list of players currently online along with their UUIDs.
+    ///
+    /// This function sends the `list uuids` command to the server via RCON,
+    /// parses the response, and returns a [`PlayerUUIDList`] containing the
+    /// count and detailed information (player name and UUID) for each online
+    /// player. If no players are online, `None` is returned.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Some(PlayerUUIDList))` – Successfully retrieved the online player
+    ///   list with UUIDs. The [`PlayerUUIDList`] struct contains:
+    ///   - `count` – The number of online players.
+    ///   - `player_list` – A vector of [`PlayerInfo`] structs, each holding:
+    ///     - `player_id` – The player's in-game name.
+    ///     - `player_uuid` – The player's UUID (as a string).
+    /// * `Ok(None)` – The server indicated that there are no players online.
+    /// * `Err(RconError)` – An error occurred during the RCON communication or
+    ///   while parsing the response. Possible errors include connection issues,
+    ///   authentication failure, or an invalid command response.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error in the following situations:
+    /// - The RCON connection fails or times out.
+    /// - The server returns an “Unknown or incomplete command” response,
+    ///   indicating that the `list uuids` command is not available or the
+    ///   server is in an unexpected state.
+    /// - The response cannot be parsed into a valid list of players and UUIDs.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use rcon2mc::rcon_client::RconClient;
+    ///
+    /// let mut client = RconClient::builder()
+    ///     .host("localhost".to_string())
+    ///     .port(25575)
+    ///     .password("password".to_string())
+    ///     .build()
+    ///     .expect("failed to connect");
+    ///
+    /// match client.command().list_uuid() {
+    ///     Ok(Some(players)) => {
+    ///         println!("Online players with UUIDs ({}):", players.count);
+    ///         for info in players.player_list {
+    ///             println!("  {} - {}", info.player_id, info.player_uuid);
+    ///         }
+    ///     }
+    ///     Ok(None) => println!("No players are online."),
+    ///     Err(e) => eprintln!("Error retrieving online players with UUIDs: {}", e),
+    /// }
+    /// ```
+    ///
+    /// [`PlayerUUIDList`]: crate::rcon_client::PlayerUUIDList
+    /// [`PlayerInfo`]: crate::rcon_client::PlayerInfo
+    pub fn list_uuid(&mut self) -> Result<Option<PlayerUUIDList>, RconError> {
+        use crate::parser::whitelist::list_uuid;
+        list_uuid(&mut self.client)
+    }
+
+    /// Alias for [`msg`](Self::msg). See [`msg`](Self::msg) for details.
+    pub fn tell(&mut self, target: &str, message: &str) -> Result<TargetStatus, RconError> {
+        use crate::parser::msg::msg;
+        msg(&mut self.client, target, message)
+    }
+
+    /// Alias for [`msg`](Self::msg). See [`msg`](Self::msg) for details.
+    pub fn w(&mut self, target: &str, message: &str) -> Result<TargetStatus, RconError> {
+        use crate::parser::msg::msg;
+        msg(&mut self.client, target, message)
+    }
+
+    /// Sends a private message (whisper) to a specific player on the Minecraft server.
+    ///
+    /// This function sends the `/msg <target> <message>` command (aka `/tell` or `/w`)
+    /// to the server via RCON. It parses the server's response and returns a [`TargetStatus`]
+    /// indicating whether the message was successfully delivered or the target player was not found.
+    ///
+    /// # Arguments
+    ///
+    /// * `target` – The name (or UUID) of the player to send the message to.
+    /// * `message` – The content of the private message.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(TargetStatus::Success(TargetStatusSuccess::Success))` – The message was successfully
+    ///   sent to the player (the server responded with "You whisper to ...").
+    /// * `Ok(TargetStatus::NotFound)` – No player with that name was found online (the server
+    ///   responded with "No player was found").
+    /// * `Err(RconError)` – An error occurred during the RCON communication or while parsing the
+    ///   response. This includes connection issues, authentication failure, an invalid command
+    ///   response, or an unexpected server reply.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error in the following situations:
+    /// - The RCON connection fails or times out.
+    /// - The server returns an “Unknown or incomplete command” response,
+    ///   indicating that the `msg` command is not available or the server is in an unexpected state.
+    /// - The server's response does not match any of the expected patterns
+    ///   (e.g., due to a change in Minecraft's message format), resulting in an
+    ///   [`RconError::UnknownParserError`].
+    /// - Any underlying I/O or protocol error during the RCON exchange.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use rcon2mc::rcon_client::RconClient;
+    /// use rcon2mc::rcon_client::{TargetStatus, TargetStatusSuccess};
+    ///
+    /// let mut client = RconClient::builder()
+    ///     .host("localhost".to_string())
+    ///     .port(25575)
+    ///     .password("password".to_string())
+    ///     .build()
+    ///     .expect("failed to connect");
+    ///
+    /// match client.command().msg("Steve", "Hello, Steve!") {
+    ///     Ok(TargetStatus::Success(TargetStatusSuccess::Success)) => {
+    ///         println!("Message sent to Steve.");
+    ///     }
+    ///     Ok(TargetStatus::NotFound) => {
+    ///         println!("Player Steve is not online.");
+    ///     }
+    ///     Err(e) => eprintln!("Error sending message: {}", e),
+    /// }
+    /// ```
+    ///
+    /// [`TargetStatus`]: crate::rcon_client::TargetStatus
+    /// [`TargetStatusSuccess`]: crate::rcon_client::TargetStatusSuccess
+    /// [`RconError::UnknownParserError`]: crate::error::RconError::UnknownParserError
+    pub fn msg(&mut self, target: &str, message: &str) -> Result<TargetStatus, RconError> {
+        use crate::parser::msg::msg;
+        msg(&mut self.client, target, message)
+    }
+
+    /// Sends a public message to all online players on the Minecraft server.
+    ///
+    /// This function sends the `/say <message>` command to the server via RCON.
+    /// The message is broadcast to every player currently online and appears
+    /// in the public chat. Unlike [`msg`](Self::msg) (or `/tell`/`/w`), which
+    /// sends a private message to a specific player, `say` is a global
+    /// announcement visible to everyone.
+    ///
+    /// # Arguments
+    ///
+    /// * `message` – The content of the public message to broadcast.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` – The message was successfully sent and broadcast to all online players.
+    /// * `Err(RconError)` – An error occurred during the RCON communication or while
+    ///   parsing the response. This includes connection issues, authentication failure,
+    ///   an invalid command response, or an unexpected server reply.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error in the following situations:
+    /// - The RCON connection fails or times out.
+    /// - The server returns an “Unknown or incomplete command” response,
+    ///   indicating that the `say` command is not available or the server
+    ///   is in an unexpected state ([`RconError::InvalidCommandError`]).
+    /// - The server's response does not match the expected empty response
+    ///   (e.g., due to a change in Minecraft's message format), resulting in an
+    ///   [`RconError::UnknownParserError`].
+    /// - Any underlying I/O or protocol error during the RCON exchange.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use rcon2mc::rcon_client::RconClient;
+    ///
+    /// let mut client = RconClient::builder()
+    ///     .host("localhost".to_string())
+    ///     .port(25575)
+    ///     .password("password".to_string())
+    ///     .build()
+    ///     .expect("failed to connect");
+    ///
+    /// match client.command().say("Server maintenance in 5 minutes!") {
+    ///     Ok(()) => println!("Public announcement sent."),
+    ///     Err(e) => eprintln!("Error sending public message: {}", e),
+    /// }
+    /// ```
+    ///
+    /// [`RconError::InvalidCommandError`]: crate::error::RconError::InvalidCommandError
+    /// [`RconError::UnknownParserError`]: crate::error::RconError::UnknownParserError
+    pub fn say(&mut self, message: &str) -> Result<(), RconError> {
+        use crate::parser::msg::say;
+        say(&mut self.client, message)
+    }
+
+    /// Sends a title, subtitle, or action bar message to a specific player.
+    ///
+    /// This function constructs and sends a `/title <target> <type> <message>` command
+    /// to the Minecraft server via RCON. It allows you to display a large title in the
+    /// center of the screen (`title`), a smaller line just below it (`subtitle`), or
+    /// a message above the hotbar (`actionbar`).
+    ///
+    /// # Arguments
+    ///
+    /// * `target` – The name (or UUID) of the player to send the title to. You may also
+    ///   use target selectors like `@a` (all players), `@p` (nearest player), etc.
+    /// * `title_type` – The type of title to send. Must be one of:
+    ///   - `"title"`    – Main title (large text in the center).
+    ///   - `"subtitle"` – Subtitle (smaller text below the main title).
+    ///   - `"actionbar"`– Message displayed above the hotbar.
+    /// * `title_msg` – The text content to display.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(TargetStatus::Success(TargetStatusSuccess::Success))` – The title was
+    ///   successfully sent to the target player (the server responded with
+    ///   "Showing new ...").
+    /// * `Ok(TargetStatus::NotFound)` – No player matched the given target (the server
+    ///   responded with "No player was found").
+    /// * `Err(RconError)` – An error occurred during the RCON communication or while
+    ///   parsing the response. This includes connection issues, authentication failure,
+    ///   an invalid command response, or an unexpected server reply.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error in the following situations:
+    /// - The `title_type` is not one of the three allowed values (`"title"`, `"subtitle"`,
+    ///   `"actionbar"`). In this case, [`RconError::UnknownParserError`] is returned with
+    ///   a descriptive message.
+    /// - The RCON connection fails or times out.
+    /// - The server returns an “Unknown or incomplete command” response,
+    ///   indicating that the `title` command is not available or the server
+    ///   is in an unexpected state ([`RconError::InvalidCommandError`]).
+    /// - The server's response does not match any of the expected patterns
+    ///   (e.g., due to a change in Minecraft's message format), resulting in an
+    ///   [`RconError::UnknownParserError`].
+    /// - Any underlying I/O or protocol error during the RCON exchange.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use rcon2mc::rcon_client::RconClient;
+    /// use rcon2mc::rcon_client::{TargetStatus, TargetStatusSuccess};
+    ///
+    /// let mut client = RconClient::builder()
+    ///     .host("localhost".to_string())
+    ///     .port(25575)
+    ///     .password("password".to_string())
+    ///     .build()
+    ///     .expect("failed to connect");
+    ///
+    /// // Send a main title "Hello!" to player Steve
+    /// match client.command().title("Steve", "title", "Hello!") {
+    ///     Ok(TargetStatus::Success(TargetStatusSuccess::Success)) => {
+    ///         println!("Title sent to Steve.");
+    ///     }
+    ///     Ok(TargetStatus::NotFound) => {
+    ///         println!("Player Steve is not online.");
+    ///     }
+    ///     Err(e) => eprintln!("Error sending title: {}", e),
+    /// }
+    /// ```
+    ///
+    /// [`RconError::UnknownParserError`]: crate::error::RconError::UnknownParserError
+    /// [`RconError::InvalidCommandError`]: crate::error::RconError::InvalidCommandError
     pub fn title(
+        &mut self,
         target: &str,
         title_type: &str,
         title_msg: &str,
-    ) -> Result<i8, Box<dyn std::error::Error>> {
-        todo!()
+    ) -> Result<TargetStatus, RconError> {
+        use crate::parser::msg::title;
+        title(&mut self.client, target, title_type, title_msg)
     }
-    pub fn tp(target: &str, x: f64, y: f64, z: f64) -> Result<i8, Box<dyn std::error::Error>> {
-        todo!()
+    /// Teleports a target entity (player or other entity) to the specified coordinates.
+    ///
+    /// This function sends the `/teleport <target> <x> <y> <z>` command to the Minecraft server
+    /// via RCON. It can teleport players, mobs, or any entity that matches the target selector.
+    /// The server may respond with a success message indicating the teleportation, or report that
+    /// no entity was found.
+    ///
+    /// # Arguments
+    ///
+    /// * `target` – The target to teleport. This can be a player name, a UUID, or an entity
+    ///   selector (e.g., `@e[type=minecraft:cow,limit=1]`, `@p`, `@a`, etc.).
+    /// * `x` – The X coordinate to teleport to. Must be within the range
+    ///   `[-30,000,000, 30,000,000)` (inclusive of the lower bound, exclusive of the upper bound).
+    /// * `y` – The Y coordinate to teleport to. Must be within the range `[-20000000, 20000000)`
+    ///   (inclusive of the lower bound, exclusive of the upper bound).
+    /// * `z` – The Z coordinate to teleport to. Must be within the range
+    ///   `[-30,000,000, 30,000,000)` (inclusive of the lower bound, exclusive of the upper bound).
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(TargetStatus::Success(TargetStatusSuccess::Success))` – The target was successfully
+    ///   teleported (the server responded with "Teleported ...").
+    /// * `Ok(TargetStatus::NotFound)` – No entity matched the given target (the server responded
+    ///   with "No entity was found").
+    /// * `Err(RconError)` – An error occurred during the RCON communication or while parsing the
+    ///   response. This includes:
+    ///   * [`RconError::InvalidCoordinate`] – One or more coordinates are outside the allowed range.
+    ///   * [`RconError::InvalidCommandError`] – The `teleport` command is not available on the server.
+    ///   * [`RconError::UnknownParserError`] – The server's response could not be parsed (e.g., due to
+    ///     an unexpected message format).
+    ///   * Other I/O or protocol errors from the underlying RCON connection.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error in the following situations:
+    /// - The `x` or `z` coordinate is less than `-30,000,000` or greater than `30,000,000`.
+    /// - The `y` coordinate is less than `-20000000` or greater than  `20000000`.
+    /// - The RCON connection fails or times out.
+    /// - The server returns an “Unknown or incomplete command” response, indicating that the
+    ///   `teleport` command is not available or the server is in an unexpected state.
+    /// - The server's response does not match any of the expected patterns (e.g., "Teleported" or
+    ///   "No entity was found").
+    /// - Any underlying I/O or protocol error during the RCON exchange.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use rcon2mc::rcon_client::RconClient;
+    /// use rcon2mc::rcon_client::{TargetStatus, TargetStatusSuccess};
+    ///
+    /// let mut client = RconClient::builder()
+    ///     .host("localhost".to_string())
+    ///     .port(25575)
+    ///     .password("password".to_string())
+    ///     .build()
+    ///     .expect("failed to connect");
+    ///
+    /// // Teleport player Steve to (100, 64, 200)
+    /// match client.command().tp("Steve", 100.0, 64.0, 200.0) {
+    ///     Ok(TargetStatus::Success(TargetStatusSuccess::Success)) => {
+    ///         println!("Steve teleported.");
+    ///     }
+    ///     Ok(TargetStatus::NotFound) => {
+    ///         println!("Player Steve is not online or does not exist.");
+    ///     }
+    ///     Err(e) => eprintln!("Error teleporting: {}", e),
+    /// }
+    /// ```
+    ///
+    /// [`TargetStatus`]: crate::rcon_client::TargetStatus
+    /// [`TargetStatusSuccess`]: crate::rcon_client::TargetStatusSuccess
+    /// [`RconError::InvalidCoordinate`]: crate::error::RconError::InvalidCoordinate
+    /// [`RconError::InvalidCommandError`]: crate::error::RconError::InvalidCommandError
+    /// [`RconError::UnknownParserError`]: crate::error::RconError::UnknownParserError
+    pub fn tp(&mut self, target: &str, x: f64, y: f64, z: f64) -> Result<TargetStatus, RconError> {
+        use crate::parser::tp::tp;
+        tp(&mut self.client, target, x, y, z)
     }
+
+    /// Transfers a player to another Minecraft server (available since 1.20.5).
+    ///
+    /// This function sends the `/transfer <hostname> <port> <target>` command to the
+    /// Minecraft server via RCON. It instructs the server to attempt to transfer the
+    /// specified player to another server at the given hostname and port.
+    ///
+    /// # Important
+    /// * **Version requirement** – This command is only available on Minecraft servers
+    ///   running version **1.20.5 or later**. Using it on older versions will likely
+    ///   result in an `RconError::InvalidCommandError`.
+    /// * **Request only** – This function only sends the transfer request; it does not
+    ///   wait for or indicate whether the player actually joined the target server.
+    ///   Successful transfer depends on:
+    ///   - The target server being reachable and running.
+    ///   - The target server having `accepts-transfers=true` in its `server.properties`
+    ///     file (default is `false`).
+    /// * **Return value** – `TargetStatus::Success` means the command was successfully
+    ///   sent to the source server. It **does not** guarantee that the player successfully
+    ///   connected to the destination server. The actual transfer outcome cannot be
+    ///   determined through RCON.
+    ///
+    /// # Arguments
+    /// * `hostname` – The hostname or IP address of the destination server.
+    /// * `port` – The port number of the destination server (as a string, e.g., `"25565"`).
+    /// * `target` – The name or UUID of the player to transfer, or a target selector
+    ///   (e.g., `@p`).
+    ///
+    /// # Returns
+    /// * `Ok(TargetStatus::Success(TargetStatusSuccess::Success))` – The transfer command
+    ///   was successfully sent to the server.
+    /// * `Ok(TargetStatus::NotFound)` – No player was found matching the given `target`
+    ///   (server responded with "No player was found").
+    /// * `Err(RconError)` – An error occurred during communication, the command is invalid,
+    ///   or the server response could not be parsed.
+    ///
+    /// # Errors
+    /// This function will return an error if:
+    /// - The RCON connection fails or times out.
+    /// - The server returns an “Unknown or incomplete command” response (e.g., on
+    ///   versions prior to 1.20.5).
+    /// - The server response does not contain expected patterns (parsing failure).
+    /// - Any underlying I/O or protocol error occurs.
+    ///
+    /// # Example
+    /// ```no_run
+    /// use rcon2mc::rcon_client::RconClient;
+    /// use rcon2mc::rcon_client::{TargetStatus, TargetStatusSuccess};
+    ///
+    /// let mut client = RconClient::builder()
+    ///     .host("localhost".to_string())
+    ///     .port(25575)
+    ///     .password("password".to_string())
+    ///     .build()
+    ///     .expect("failed to connect");
+    ///
+    /// match client.command().transfer("hub.example.com", "25565", "Steve") {
+    ///     Ok(TargetStatus::Success(TargetStatusSuccess::Success)) => {
+    ///         println!("Transfer command sent to Steve.");
+    ///         // Note: This does not guarantee Steve actually connected to the hub.
+    ///     }
+    ///     Ok(TargetStatus::NotFound) => {
+    ///         println!("Player Steve is not online or does not exist.");
+    ///     }
+    ///     Err(e) => eprintln!("Error transferring player: {}", e),
+    /// }
+    /// ```
     pub fn transfer(
+        &mut self,
         hostname: &str,
         port: &str,
         target: &str,
-    ) -> Result<i8, Box<dyn std::error::Error>> {
-        todo!()
+    ) -> Result<TargetStatus, RconError> {
+        use crate::parser::tp::transfer;
+        transfer(&mut self.client, hostname, port, target)
     }
-    pub fn weather(weather: &str) -> Result<(), Box<dyn std::error::Error>> {
-        todo!()
-    }
-    pub fn say(message: &str) -> Result<(), Box<dyn std::error::Error>> {
-        todo!()
-    }
-    pub fn time(time_type: &str) -> Result<(), Box<dyn std::error::Error>> {
-        todo!()
+
+    /// Sets the weather on the Minecraft server.
+    ///
+    /// This function sends the `/weather <weather_name>` command to the server via RCON.
+    /// It changes the current weather condition to one of three possible types.
+    ///
+    /// # Arguments
+    ///
+    /// * `weather_name` – The desired weather type. Must be one of:
+    ///   - `"clear"`   – Sets the weather to clear (sunny).
+    ///   - `"rain"`    – Sets the weather to rain (or snow in cold biomes).
+    ///   - `"thunder"` – Sets the weather to a thunderstorm (rain with lightning).
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` – The weather was successfully changed (the server responded with
+    ///   "Set the weather to ...").
+    /// * `Err(RconError)` – An error occurred during the RCON communication or while
+    ///   parsing the response. This includes connection issues, authentication failure,
+    ///   an invalid command response, or an unexpected server reply.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error in the following situations:
+    /// - The `weather_name` is not one of the three allowed values (before sending the
+    ///   command, the function performs a basic validation and returns
+    ///   [`RconError::UnknownParserError`] with an explanatory message).
+    /// - The RCON connection fails or times out.
+    /// - The server returns an “Unknown or incomplete command” response,
+    ///   indicating that the `weather` command is not available or the server
+    ///   is in an unexpected state.
+    /// - The server's response does not match the expected pattern
+    ///   (e.g., due to a change in Minecraft's message format), resulting in an
+    ///   [`RconError::UnknownParserError`].
+    /// - Any underlying I/O or protocol error during the RCON exchange.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use rcon2mc::rcon_client::RconClient;
+    ///
+    /// let mut client = RconClient::builder()
+    ///     .host("localhost".to_string())
+    ///     .port(25575)
+    ///     .password("password".to_string())
+    ///     .build()
+    ///     .expect("failed to connect");
+    ///
+    /// // Set weather to rain
+    /// match client.command().weather("rain") {
+    ///     Ok(()) => println!("Weather set to rain."),
+    ///     Err(e) => eprintln!("Error setting weather: {}", e),
+    /// }
+    /// ```
+    ///
+    /// [`RconError::UnknownParserError`]: crate::error::RconError::UnknownParserError
+    pub fn weather(&mut self, weather_name: &str) -> Result<(), RconError> {
+        use crate::parser::difficulty::weather;
+        weather(&mut self.client, weather_name)
     }
 }

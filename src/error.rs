@@ -81,4 +81,8 @@ pub enum RconError {
     InvalidCommandError,
     #[error("UnknownParserError for {0}")]
     UnknownParserError(String),
+    #[error("InvalidCoordinate: {0}")]
+    InvalidCoordinate(String),
+    #[error("InvalidArgument: {0}")]
+    InvalidCommandArgument(String),
 }
