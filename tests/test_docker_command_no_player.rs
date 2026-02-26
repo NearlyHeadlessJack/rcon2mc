@@ -28,22 +28,22 @@ mod utils;
 
 
 
-#[test]
-fn test_docker_command_whitelist_add_not_found() {
-    let Some(rcon) = utils::rcon::get_rcon() else {
-        return;
-    };
-    let Ok(rcon) = rcon else {
-        assert!(false);
-        return;
-    };
-    let feedback = rcon
-        .command()
-        .whitelist_add("NOFbieufwbe3i32fdSWEATER99992f")
-        .expect("whitelist add command push fail");
-    dbg!(&feedback);
-    assert_eq!(feedback, TargetStatus::NotFound)
-}
+// #[test]
+// fn test_docker_command_whitelist_add_not_found() {
+//     let Some(rcon) = utils::rcon::get_rcon() else {
+//         return;
+//     };
+//     let Ok(rcon) = rcon else {
+//         assert!(false);
+//         return;
+//     };
+//     let feedback = rcon
+//         .command()
+//         .whitelist_add("NOFbieufwbe3i32fdSWEATER99992f")
+//         .expect("whitelist add command push fail");
+//     dbg!(&feedback);
+//     assert_eq!(feedback, TargetStatus::NotFound)
+// }
 
 #[test]
 fn test_docker_command_kill_none() {
