@@ -14,7 +14,7 @@ jobs:
       - name: Setup Docker
         run: |
           docker pull ghcr.io/nearlyheadlessjack/mc-test:26.1.10
-          docker run -d --name mc-test -p 25575:25575 ghcr.io/nearlyheadlessjack/mc-test:26.1.10
+          docker run -d --name mc-test --network host ghcr.io/nearlyheadlessjack/mc-test:26.1.10
 
       - name: Run Tests
         run: |
