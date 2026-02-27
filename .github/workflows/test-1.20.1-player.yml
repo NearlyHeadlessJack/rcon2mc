@@ -25,7 +25,9 @@ jobs:
       - name: Running Minecraft-cli-Client
         run: |
           screen -dmS mysession1 bash -c "./mc-client player1 - 127.0.0.1:25565 > script1.log 2>&1"
+          sleep 3s
           screen -dmS mysession2 bash -c "./mc-client player2 - 127.0.0.1:25565 > script2.log 2>&1"
+          sleep 3s
           screen -dmS mysession3 bash -c "./mc-client player3 - 127.0.0.1:25565 > script3.log 2>&1"
 
       - name: Run Tests

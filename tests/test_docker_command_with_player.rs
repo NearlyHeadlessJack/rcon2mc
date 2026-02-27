@@ -52,6 +52,7 @@ fn test_player_list_num(){
         panic!("Fail to get rcon executor");
     };
     let feedback = executor.list().unwrap();
+    dbg!(&feedback);
     let Some(plist) = feedback else { panic!("Fail to get player list") };
     assert_eq!(plist.count, 3);
 
