@@ -22,6 +22,8 @@
  * // Author: Jack Wang <wang@rjack.cn>
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
+use std::thread::sleep;
+use std::time::Duration;
 use rcon2mc::rcon_client::RconClient;
 mod utils;
 #[test]
@@ -31,7 +33,8 @@ fn test_docker_correct_password() {
         .port(utils::consts::port())
         .password(utils::consts::password())
         .build();
-    assert!(rcon.is_ok())
+    assert!(rcon.is_ok());
+    sleep(Duration::from_secs(5));
 }
 
 #[test]
@@ -44,5 +47,6 @@ fn test_docker_incorrect_password() {
         .port(utils::consts::port())
         .password(password)
         .build();
-    assert!(matches!(rcon, Err(RconError::IncorrectPasswordError)))
+    assert!(matches!(rcon, Err(RconError::IncorrectPasswordError)));
+    sleep(Duration::from_secs(5));
 }
