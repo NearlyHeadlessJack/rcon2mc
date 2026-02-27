@@ -26,12 +26,15 @@
 use rcon2mc::rcon_client::RconClient;
 use rcon2mc::rcon_client::{TargetStatus, TargetStatusSuccess};
 use std::sync::{Mutex, MutexGuard, OnceLock};
+use std::thread;
+use std::time::Duration;
 
 mod utils;
 
 static GLOBAL_EXECUTOR: OnceLock<Mutex<rcon2mc::command::CommandExecutor>> = OnceLock::new();
 
 fn get_executor() -> Option<MutexGuard<'static, rcon2mc::command::CommandExecutor>> {
+    thread::sleep(Duration::from_secs(3));
     let mutex = GLOBAL_EXECUTOR.get_or_init(|| {
         let rcon = RconClient::builder()
             .host(utils::consts::host())
