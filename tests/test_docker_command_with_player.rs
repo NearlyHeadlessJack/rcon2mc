@@ -26,15 +26,12 @@
 use rcon2mc::rcon_client::RconClient;
 use rcon2mc::rcon_client::{TargetStatus, TargetStatusSuccess};
 use std::sync::{Mutex, MutexGuard, OnceLock};
-use std::thread;
-use std::time::Duration;
 
 mod utils;
 
 static GLOBAL_EXECUTOR: OnceLock<Mutex<rcon2mc::command::CommandExecutor>> = OnceLock::new();
 
 fn get_executor() -> Option<MutexGuard<'static, rcon2mc::command::CommandExecutor>> {
-    thread::sleep(Duration::from_secs(3));
     let mutex = GLOBAL_EXECUTOR.get_or_init(|| {
         let rcon = RconClient::builder()
             .host(utils::consts::host())
@@ -46,29 +43,29 @@ fn get_executor() -> Option<MutexGuard<'static, rcon2mc::command::CommandExecuto
     });
     Some(mutex.lock().unwrap())
 }
-//
-//
-// #[test]
-// fn test_player_list_num(){
-//     let Some(mut executor) = get_executor() else {
-//         panic!("Fail to get rcon executor");
-//     };
-//     let feedback = executor.list().unwrap();
-//     dbg!(&feedback);
-//     let Some(plist) = feedback else { panic!("Fail to get player list") };
-//     assert_eq!(plist.count, 4);
-// }
 
-// #[test]
-// fn test_player_list_uuids_num(){
-//     let Some(mut executor) = get_executor() else {
-//         panic!("Fail to get rcon executor");
-//     };
-//     let feedback = executor.list_uuid().unwrap();
-//     dbg!(&feedback);
-//     let Some(plist) = feedback else { panic!("Fail to get player list") };
-//     assert_eq!(plist.count, 4);
-// }
+
+#[test]
+fn test_player_list_num(){
+    let Some(mut executor) = get_executor() else {
+        panic!("Fail to get rcon executor");
+    };
+    let feedback = executor.list().unwrap();
+    dbg!(&feedback);
+    let Some(plist) = feedback else { panic!("Fail to get player list") };
+    assert_eq!(plist.count, 4);
+}
+
+#[test]
+fn test_player_list_uuids_num(){
+    let Some(mut executor) = get_executor() else {
+        panic!("Fail to get rcon executor");
+    };
+    let feedback = executor.list_uuid().unwrap();
+    dbg!(&feedback);
+    let Some(plist) = feedback else { panic!("Fail to get player list") };
+    assert_eq!(plist.count, 4);
+}
 
 #[test]
 fn test_player_give_item_success() {
