@@ -14,8 +14,8 @@ jobs:
 
       - name: Setup Docker
         run: |
-          docker pull ghcr.io/nearlyheadlessjack/mc-test:1.20.1.0
-          docker run -d --name mc-test --network host ghcr.io/nearlyheadlessjack/mc-test:1.20.1.0
+          docker pull ghcr.io/nearlyheadlessjack/mc-test:1.20.1.1
+          docker run -d --name mc-test --network host ghcr.io/nearlyheadlessjack/mc-test:1.20.1.1
           sleep 15s
       - name: Download Minecraft-cli-Client
         run: |
