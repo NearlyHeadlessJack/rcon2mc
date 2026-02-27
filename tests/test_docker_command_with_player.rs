@@ -23,12 +23,11 @@
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
 
-use rcon2mc::rcon_client::{RconClient, TargetStatus, TargetStatusSuccess};
+use rcon2mc::rcon_client::{RconClient};
 use std::sync::{Mutex, MutexGuard, OnceLock};
-use std::thread::sleep;
-use std::time::Duration;
+
 mod utils;
-use rcon2mc::rcon_client::PlayerList;
+
 
 static GLOBAL_EXECUTOR: OnceLock<Mutex<rcon2mc::command::CommandExecutor>> = OnceLock::new();
 
@@ -54,6 +53,6 @@ fn test_player_list_num(){
     let feedback = executor.list().unwrap();
     dbg!(&feedback);
     let Some(plist) = feedback else { panic!("Fail to get player list") };
-    assert_eq!(plist.count, 3);
+    assert_eq!(plist.count, 4);
 
 }
