@@ -5,15 +5,15 @@ on:
 
 jobs:
   testing-1-20-01:
-    uses: ./.github/workflows/with-player/test-1.20.1.yml
+    uses: ./.github/workflows/test-1.20.1-player.yml
     name: "Testing on 1.20.1"
 
 #  testing-1-16-05:
-#    uses: ./.github/workflows/with-player/test-1.16.5.yml
+#    uses: ./.github/workflows/test-1.16.5.yml
 #    name: "Testing on 1.16.5"
 #
 #  testing-1-12-02:
 #    needs: [testing-1-16-05, testing-1-20-01]
-#    uses: ./.github/workflows/with-player/test-1.12.2.yml
+#    uses: ./.github/workflows/test-1.12.2.yml
 #    name: "Testing on 1.12.2"
 
