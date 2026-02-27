@@ -23,19 +23,24 @@
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
 use rcon2mc::rcon_client::RconClient;
+use std::thread::sleep;
+use std::time::Duration;
 mod utils;
+
 #[test]
 fn test_docker_correct_password() {
+    sleep(Duration::from_secs(5));
     let rcon = RconClient::builder()
         .host(utils::consts::host())
         .port(utils::consts::port())
         .password(utils::consts::password())
         .build();
-    assert!(rcon.is_ok())
+    assert!(rcon.is_ok());
 }
 
 #[test]
 fn test_docker_incorrect_password() {
+    sleep(Duration::from_secs(5));
     use rcon2mc::error::RconError;
     let mut password = utils::consts::password().clone();
     password.pop();
@@ -44,5 +49,5 @@ fn test_docker_incorrect_password() {
         .port(utils::consts::port())
         .password(password)
         .build();
-    assert!(matches!(rcon, Err(RconError::IncorrectPasswordError)))
+    assert!(matches!(rcon, Err(RconError::IncorrectPasswordError)));
 }
