@@ -26,19 +26,21 @@ use std::thread::sleep;
 use std::time::Duration;
 use rcon2mc::rcon_client::RconClient;
 mod utils;
+
 #[test]
 fn test_docker_correct_password() {
+    sleep(Duration::from_secs(5));
     let rcon = RconClient::builder()
         .host(utils::consts::host())
         .port(utils::consts::port())
         .password(utils::consts::password())
         .build();
     assert!(rcon.is_ok());
-    sleep(Duration::from_secs(5));
 }
 
 #[test]
 fn test_docker_incorrect_password() {
+    sleep(Duration::from_secs(5));
     use rcon2mc::error::RconError;
     let mut password = utils::consts::password().clone();
     password.pop();
@@ -48,5 +50,4 @@ fn test_docker_incorrect_password() {
         .password(password)
         .build();
     assert!(matches!(rcon, Err(RconError::IncorrectPasswordError)));
-    sleep(Duration::from_secs(5));
 }
