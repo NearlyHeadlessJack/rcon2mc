@@ -23,20 +23,21 @@
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
 use rcon2mc::rcon_client::{RconClient, TargetStatus, TargetStatusSuccess};
-use std::sync::{Mutex,OnceLock,MutexGuard};
-use std::time::Duration;
+use std::sync::{Mutex, MutexGuard, OnceLock};
 use std::thread::sleep;
+use std::time::Duration;
 mod utils;
 
 static GLOBAL_EXECUTOR: OnceLock<Mutex<rcon2mc::command::CommandExecutor>> = OnceLock::new();
 
-fn get_executor() -> Option<MutexGuard<'static, rcon2mc::command::CommandExecutor>>{
-    let mutex = GLOBAL_EXECUTOR.get_or_init(||{
+fn get_executor() -> Option<MutexGuard<'static, rcon2mc::command::CommandExecutor>> {
+    let mutex = GLOBAL_EXECUTOR.get_or_init(|| {
         let rcon = RconClient::builder()
             .host(utils::consts::host())
             .port(utils::consts::port())
             .password(utils::consts::password())
-            .build().expect("Fail to build rcon client connection");
+            .build()
+            .expect("Fail to build rcon client connection");
         Mutex::new(rcon.command())
     });
     Some(mutex.lock().unwrap())
@@ -64,9 +65,7 @@ fn test_docker_command_kill_none() {
     let Some(mut executor) = get_executor() else {
         panic!("Fail to get rcon executor");
     };
-    let feedback = executor
-        .kill("Steve")
-        .expect("kill command push fail");
+    let feedback = executor.kill("Steve").expect("kill command push fail");
     dbg!(&feedback);
     assert_eq!(feedback, TargetStatus::NotFound)
 }
@@ -212,9 +211,7 @@ fn test_docker_command_ban_none() {
     };
     assert!(result);
     sleep(Duration::from_secs(5));
-    let feedback = executor
-        .pardon("zi_min")
-        .expect("ban command push fail");
+    let feedback = executor.pardon("zi_min").expect("ban command push fail");
     dbg!(&feedback);
     assert_eq!(
         feedback,
@@ -222,9 +219,7 @@ fn test_docker_command_ban_none() {
     );
     sleep(Duration::from_secs(5));
 
-    let feedback = executor
-        .pardon("zi_min")
-        .expect("ban command push fail");
+    let feedback = executor.pardon("zi_min").expect("ban command push fail");
     dbg!(&feedback);
     assert_eq!(
         feedback,
@@ -237,9 +232,7 @@ fn test_docker_command_whitelist_operation_none() {
     let Some(mut executor) = get_executor() else {
         panic!("Fail to get rcon executor");
     };
-    let feedback = executor
-        .whitelist()
-        .expect("whitelist command push fail");
+    let feedback = executor.whitelist().expect("whitelist command push fail");
     dbg!(&feedback);
     assert_eq!(feedback, None);
     sleep(Duration::from_secs(5));

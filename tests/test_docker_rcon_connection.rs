@@ -22,9 +22,9 @@
  * // Author: Jack Wang <wang@rjack.cn>
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
+use rcon2mc::rcon_client::RconClient;
 use std::thread::sleep;
 use std::time::Duration;
-use rcon2mc::rcon_client::RconClient;
 mod utils;
 
 #[test]
