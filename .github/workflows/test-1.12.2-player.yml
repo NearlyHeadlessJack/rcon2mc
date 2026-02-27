@@ -19,6 +19,21 @@ jobs:
           docker run -d --name mc-test --network host ghcr.io/nearlyheadlessjack/mc-test:1.12.2.4
           sleep 10s
 
+      - name: Download Minecraft-cli-Client
+        run: |
+          docker pull ghcr.io/nearlyheadlessjack/mc-cli-client:1.0.9
+          docker run -d --name mc-cli-1 -e PLAYER_ID=player1 -e MC_PORT=25565 --network host ghcr.io/nearlyheadlessjack/mc-cli-client:1.0.9
+          sleep 2s
+          docker logs mc-cli-1
+          docker run -d --name mc-cli-2 -e PLAYER_ID=player2 -e MC_PORT=25565 --network host ghcr.io/nearlyheadlessjack/mc-cli-client:1.0.9
+          sleep 2s
+          docker logs mc-cli-2
+          docker run -d --name mc-cli-3 -e PLAYER_ID=player3 -e MC_PORT=25565 --network host ghcr.io/nearlyheadlessjack/mc-cli-client:1.0.9
+          sleep 2s
+          docker logs mc-cli-3
+          docker run -d --name mc-cli-4 -e PLAYER_ID=player4 -e MC_PORT=25565 --network host ghcr.io/nearlyheadlessjack/mc-cli-client:1.0.9
+          docker logs mc-cli-4
+
       - name: Run Rcon Connection Test
         run: |
           sleep 3s
