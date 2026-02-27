@@ -22,9 +22,23 @@
  * // Author: Jack Wang <wang@rjack.cn>
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
-use rcon2mc::rcon_client::{TargetStatus, TargetStatusSuccess};
-
+use rcon2mc::rcon_client::{RconClient, TargetStatus, TargetStatusSuccess};
+use std::sync::{Mutex,OnceLock,MutexGuard};
 mod utils;
+
+static GLOBAL_EXECUTOR: OnceLock<Mutex<rcon2mc::command::CommandExecutor>> = OnceLock::new();
+
+fn get_executor() -> Option<MutexGuard<'static, rcon2mc::command::CommandExecutor>>{
+    let mutex = GLOBAL_EXECUTOR.get_or_init(||{
+        let rcon = RconClient::builder()
+            .host(utils::consts::host())
+            .port(utils::consts::port())
+            .password(utils::consts::password())
+            .build().expect("Fail to build rcon client connection");
+        Mutex::new(rcon.command())
+    });
+    Some(mutex.lock().unwrap())
+}
 
 // #[test]
 // fn test_docker_command_whitelist_add_not_found() {
@@ -45,15 +59,10 @@ mod utils;
 
 #[test]
 fn test_docker_command_kill_none() {
-    let Some(rcon) = utils::rcon::get_rcon() else {
+    let Some(mut executor) = get_executor() else {
         return;
     };
-    let Ok(rcon) = rcon else {
-        assert!(false);
-        return;
-    };
-    let feedback = rcon
-        .command()
+    let feedback = executor
         .kill("Steve")
         .expect("kill command push fail");
     dbg!(&feedback);
@@ -62,15 +71,10 @@ fn test_docker_command_kill_none() {
 
 #[test]
 fn test_docker_command_kick_none() {
-    let Some(rcon) = utils::rcon::get_rcon() else {
+    let Some(mut executor) = get_executor() else {
         return;
     };
-    let Ok(rcon) = rcon else {
-        assert!(false);
-        return;
-    };
-    let feedback = rcon
-        .command()
+    let feedback = executor
         .kick("Steve", Some("no reason"))
         .expect("kick command push fail");
     dbg!(&feedback);
@@ -79,15 +83,10 @@ fn test_docker_command_kick_none() {
 
 #[test]
 fn test_docker_command_give_none() {
-    let Some(rcon) = utils::rcon::get_rcon() else {
+    let Some(mut executor) = get_executor() else {
         return;
     };
-    let Ok(rcon) = rcon else {
-        assert!(false);
-        return;
-    };
-    let feedback = rcon
-        .command()
+    let feedback = executor
         .give("Steve", "minecraft:torch", 1)
         .expect("give command push fail");
     dbg!(&feedback);
@@ -96,15 +95,10 @@ fn test_docker_command_give_none() {
 
 #[test]
 fn test_docker_command_msg_none() {
-    let Some(rcon) = utils::rcon::get_rcon() else {
+    let Some(mut executor) = get_executor() else {
         return;
     };
-    let Ok(rcon) = rcon else {
-        assert!(false);
-        return;
-    };
-    let feedback = rcon
-        .command()
+    let feedback = executor
         .msg("Steve", "my msg")
         .expect("msg / w / tell command push fail");
     dbg!(&feedback);
@@ -113,29 +107,20 @@ fn test_docker_command_msg_none() {
 
 #[test]
 fn test_docker_command_say_none() {
-    let Some(rcon) = utils::rcon::get_rcon() else {
+    let Some(mut executor) = get_executor() else {
         return;
     };
-    let Ok(rcon) = rcon else {
-        assert!(false);
-        return;
-    };
-    let feedback = rcon.command().say("my msg").expect("say command push fail");
+    let feedback = executor.say("my msg").expect("say command push fail");
     dbg!(&feedback);
     assert_eq!(feedback, ())
 }
 
 #[test]
 fn test_docker_command_title_none() {
-    let Some(rcon) = utils::rcon::get_rcon() else {
+    let Some(mut executor) = get_executor() else {
         return;
     };
-    let Ok(rcon) = rcon else {
-        assert!(false);
-        return;
-    };
-    let feedback = rcon
-        .command()
+    let feedback = executor
         .title("Steve", "title", "my msg")
         .expect("title command push fail");
     dbg!(&feedback);
@@ -144,15 +129,10 @@ fn test_docker_command_title_none() {
 
 #[test]
 fn test_docker_command_tp_none() {
-    let Some(rcon) = utils::rcon::get_rcon() else {
+    let Some(mut executor) = get_executor() else {
         return;
     };
-    let Ok(rcon) = rcon else {
-        assert!(false);
-        return;
-    };
-    let feedback = rcon
-        .command()
+    let feedback = executor
         .tp("Steve", 1.0, 1.0, 0.0)
         .expect("tp command push fail");
     dbg!(&feedback);
@@ -165,15 +145,10 @@ fn test_docker_command_transfer_none() {
     if is_not_available("1.20.5") {
         return;
     }
-    let Some(rcon) = utils::rcon::get_rcon() else {
+    let Some(mut executor) = get_executor() else {
         return;
     };
-    let Ok(rcon) = rcon else {
-        assert!(false);
-        return;
-    };
-    let feedback = rcon
-        .command()
+    let feedback = executor
         .transfer("192.168.1.1", "25565", "Steve")
         .expect("transfer command push fail");
     dbg!(&feedback);
@@ -182,15 +157,10 @@ fn test_docker_command_transfer_none() {
 
 #[test]
 fn test_docker_command_weather_none() {
-    let Some(rcon) = utils::rcon::get_rcon() else {
+    let Some(mut executor) = get_executor() else {
         return;
     };
-    let Ok(rcon) = rcon else {
-        assert!(false);
-        return;
-    };
-    let feedback = rcon
-        .command()
+    let feedback = executor
         .weather("clear")
         .expect("weather command push fail");
     dbg!(&feedback);
@@ -199,15 +169,10 @@ fn test_docker_command_weather_none() {
 
 #[test]
 fn test_docker_command_difficulty_none() {
-    let Some(rcon) = utils::rcon::get_rcon() else {
+    let Some(mut executor) = get_executor() else {
         return;
     };
-    let Ok(rcon) = rcon else {
-        assert!(false);
-        return;
-    };
-    let feedback = rcon
-        .command()
+    let feedback = executor
         .difficulty("easy")
         .expect("difficulty command push fail");
     dbg!(&feedback);
@@ -216,15 +181,10 @@ fn test_docker_command_difficulty_none() {
 /// 1.12.2测试，重复封禁仍使用旧信息，不会提示重复信息
 #[test]
 fn test_docker_command_ban_none() {
-    let Some(rcon) = utils::rcon::get_rcon() else {
+    let Some(mut executor) = get_executor() else {
         return;
     };
-    let Ok(rcon) = rcon else {
-        assert!(false);
-        return;
-    };
-    let feedback = rcon
-        .command()
+    let feedback = executor
         .ban("zi_min", Some("no reason"))
         .expect("ban command push fail");
     dbg!(&feedback);
@@ -237,15 +197,7 @@ fn test_docker_command_ban_none() {
     };
     assert!(result);
 
-    let Some(rcon) = utils::rcon::get_rcon() else {
-        return;
-    };
-    let Ok(rcon) = rcon else {
-        assert!(false);
-        return;
-    };
-    let feedback = rcon
-        .command()
+    let feedback = executor
         .ban("zi_min", Some("no reason"))
         .expect("ban command push fail");
     dbg!(&feedback);
@@ -257,15 +209,8 @@ fn test_docker_command_ban_none() {
         false
     };
     assert!(result);
-    let Some(rcon) = utils::rcon::get_rcon() else {
-        return;
-    };
-    let Ok(rcon) = rcon else {
-        assert!(false);
-        return;
-    };
-    let feedback = rcon
-        .command()
+
+    let feedback = executor
         .pardon("zi_min")
         .expect("ban command push fail");
     dbg!(&feedback);
@@ -274,15 +219,8 @@ fn test_docker_command_ban_none() {
         TargetStatus::Success(TargetStatusSuccess::Success)
     );
 
-    let Some(rcon) = utils::rcon::get_rcon() else {
-        return;
-    };
-    let Ok(rcon) = rcon else {
-        assert!(false);
-        return;
-    };
-    let feedback = rcon
-        .command()
+
+    let feedback = executor
         .pardon("zi_min")
         .expect("ban command push fail");
     dbg!(&feedback);
@@ -294,29 +232,16 @@ fn test_docker_command_ban_none() {
 
 #[test]
 fn test_docker_command_whitelist_operation_none() {
-    let Some(rcon) = utils::rcon::get_rcon() else {
+    let Some(mut executor) = get_executor() else {
         return;
     };
-    let Ok(rcon) = rcon else {
-        assert!(false);
-        return;
-    };
-    let feedback = rcon
-        .command()
+    let feedback = executor
         .whitelist()
         .expect("whitelist command push fail");
     dbg!(&feedback);
     assert_eq!(feedback, None);
 
-    let Some(rcon) = utils::rcon::get_rcon() else {
-        return;
-    };
-    let Ok(rcon) = rcon else {
-        assert!(false);
-        return;
-    };
-    let feedback = rcon
-        .command()
+    let feedback = executor
         .whitelist_add("zi_min")
         .expect("whitelist command push fail");
     dbg!(&feedback);
@@ -325,15 +250,8 @@ fn test_docker_command_whitelist_operation_none() {
         TargetStatus::Success(TargetStatusSuccess::Success)
     );
 
-    let Some(rcon) = utils::rcon::get_rcon() else {
-        return;
-    };
-    let Ok(rcon) = rcon else {
-        assert!(false);
-        return;
-    };
-    let feedback = rcon
-        .command()
+
+    let feedback = executor
         .whitelist_add("zi_min")
         .expect("whitelist command push fail");
     dbg!(&feedback);
@@ -346,15 +264,8 @@ fn test_docker_command_whitelist_operation_none() {
     };
     assert!(result);
 
-    let Some(rcon) = utils::rcon::get_rcon() else {
-        return;
-    };
-    let Ok(rcon) = rcon else {
-        assert!(false);
-        return;
-    };
-    let feedback = rcon
-        .command()
+
+    let feedback = executor
         .whitelist_remove("zi_min")
         .expect("whitelist command push fail");
     dbg!(&feedback);
@@ -363,15 +274,8 @@ fn test_docker_command_whitelist_operation_none() {
         TargetStatus::Success(TargetStatusSuccess::Success)
     );
 
-    let Some(rcon) = utils::rcon::get_rcon() else {
-        return;
-    };
-    let Ok(rcon) = rcon else {
-        assert!(false);
-        return;
-    };
-    let feedback = rcon
-        .command()
+
+    let feedback = executor
         .whitelist_remove("zi_min")
         .expect("whitelist command push fail");
     dbg!(&feedback);
@@ -387,14 +291,10 @@ fn test_docker_command_whitelist_operation_none() {
 
 #[test]
 fn test_docker_command_op_none() {
-    let Some(rcon) = utils::rcon::get_rcon() else {
+    let Some(mut executor) = get_executor() else {
         return;
     };
-    let Ok(rcon) = rcon else {
-        assert!(false);
-        return;
-    };
-    let feedback = rcon.command().op("zi_min").expect("op command push fail");
+    let feedback = executor.op("zi_min").expect("op command push fail");
     dbg!(&feedback);
     let result = if feedback == TargetStatus::Success(TargetStatusSuccess::Success)
         || feedback == TargetStatus::Success(TargetStatusSuccess::Duplicated)
@@ -405,14 +305,7 @@ fn test_docker_command_op_none() {
     };
     assert!(result);
 
-    let Some(rcon) = utils::rcon::get_rcon() else {
-        return;
-    };
-    let Ok(rcon) = rcon else {
-        assert!(false);
-        return;
-    };
-    let feedback = rcon.command().op("zi_min").expect("op command push fail");
+    let feedback = executor.op("zi_min").expect("op command push fail");
     dbg!(&feedback);
     let result = if feedback == TargetStatus::Success(TargetStatusSuccess::Success)
         || feedback == TargetStatus::Success(TargetStatusSuccess::Duplicated)
@@ -423,28 +316,14 @@ fn test_docker_command_op_none() {
     };
     assert!(result);
 
-    let Some(rcon) = utils::rcon::get_rcon() else {
-        return;
-    };
-    let Ok(rcon) = rcon else {
-        assert!(false);
-        return;
-    };
-    let feedback = rcon.command().deop("zi_min").expect("op command push fail");
+    let feedback = executor.deop("zi_min").expect("op command push fail");
     dbg!(&feedback);
     assert_eq!(
         feedback,
         TargetStatus::Success(TargetStatusSuccess::Success)
     );
 
-    let Some(rcon) = utils::rcon::get_rcon() else {
-        return;
-    };
-    let Ok(rcon) = rcon else {
-        assert!(false);
-        return;
-    };
-    let feedback = rcon.command().deop("zi_min").expect("op command push fail");
+    let feedback = executor.deop("zi_min").expect("op command push fail");
     dbg!(&feedback);
     assert_eq!(
         feedback,

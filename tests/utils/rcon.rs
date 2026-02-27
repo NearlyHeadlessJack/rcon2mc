@@ -27,9 +27,6 @@ use rcon2mc::rcon_client::RconClient;
 use std::cmp::Ordering;
 
 pub fn get_rcon() -> Option<Result<RconClient, rcon2mc::error::RconError>> {
-    if get_env() {
-        return None;
-    }
     let rcon = RconClient::builder()
         .host(utils::consts::host())
         .port(utils::consts::port())
@@ -55,9 +52,6 @@ pub fn is_not_available(current_version: &str) -> bool {
     }
 }
 
-fn get_env() -> bool {
-    return std::env::var("RCON_TEST_PART").is_ok();
-}
 fn parse_version(version: &str) -> Option<Vec<u32>> {
     version
         .split('.')
