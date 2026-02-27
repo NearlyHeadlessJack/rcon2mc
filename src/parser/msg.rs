@@ -45,6 +45,9 @@ pub fn msg(
     if feedback.contains("You whisper to") {
         return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
     }
+    if feedback == " ".to_string() {
+        return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
+    }
     Err(RconError::UnknownParserError(
         format!("Unknown error when whisper to player {}.", target).to_string(),
     ))
