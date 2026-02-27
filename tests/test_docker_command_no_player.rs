@@ -24,6 +24,8 @@
  */
 use rcon2mc::rcon_client::{RconClient, TargetStatus, TargetStatusSuccess};
 use std::sync::{Mutex,OnceLock,MutexGuard};
+use std::time::Duration;
+use std::thread::sleep;
 mod utils;
 
 static GLOBAL_EXECUTOR: OnceLock<Mutex<rcon2mc::command::CommandExecutor>> = OnceLock::new();
@@ -60,7 +62,7 @@ fn get_executor() -> Option<MutexGuard<'static, rcon2mc::command::CommandExecuto
 #[test]
 fn test_docker_command_kill_none() {
     let Some(mut executor) = get_executor() else {
-        return;
+        panic!("Fail to get rcon executor");
     };
     let feedback = executor
         .kill("Steve")
@@ -72,7 +74,7 @@ fn test_docker_command_kill_none() {
 #[test]
 fn test_docker_command_kick_none() {
     let Some(mut executor) = get_executor() else {
-        return;
+        panic!("Fail to get rcon executor");
     };
     let feedback = executor
         .kick("Steve", Some("no reason"))
@@ -84,7 +86,7 @@ fn test_docker_command_kick_none() {
 #[test]
 fn test_docker_command_give_none() {
     let Some(mut executor) = get_executor() else {
-        return;
+        panic!("Fail to get rcon executor");
     };
     let feedback = executor
         .give("Steve", "minecraft:torch", 1)
@@ -96,7 +98,7 @@ fn test_docker_command_give_none() {
 #[test]
 fn test_docker_command_msg_none() {
     let Some(mut executor) = get_executor() else {
-        return;
+        panic!("Fail to get rcon executor");
     };
     let feedback = executor
         .msg("Steve", "my msg")
@@ -108,7 +110,7 @@ fn test_docker_command_msg_none() {
 #[test]
 fn test_docker_command_say_none() {
     let Some(mut executor) = get_executor() else {
-        return;
+        panic!("Fail to get rcon executor");
     };
     let feedback = executor.say("my msg").expect("say command push fail");
     dbg!(&feedback);
@@ -118,7 +120,7 @@ fn test_docker_command_say_none() {
 #[test]
 fn test_docker_command_title_none() {
     let Some(mut executor) = get_executor() else {
-        return;
+        panic!("Fail to get rcon executor");
     };
     let feedback = executor
         .title("Steve", "title", "my msg")
@@ -130,7 +132,7 @@ fn test_docker_command_title_none() {
 #[test]
 fn test_docker_command_tp_none() {
     let Some(mut executor) = get_executor() else {
-        return;
+        panic!("Fail to get rcon executor");
     };
     let feedback = executor
         .tp("Steve", 1.0, 1.0, 0.0)
@@ -146,7 +148,7 @@ fn test_docker_command_transfer_none() {
         return;
     }
     let Some(mut executor) = get_executor() else {
-        return;
+        panic!("Fail to get rcon executor");
     };
     let feedback = executor
         .transfer("192.168.1.1", "25565", "Steve")
@@ -158,7 +160,7 @@ fn test_docker_command_transfer_none() {
 #[test]
 fn test_docker_command_weather_none() {
     let Some(mut executor) = get_executor() else {
-        return;
+        panic!("Fail to get rcon executor");
     };
     let feedback = executor
         .weather("clear")
@@ -170,7 +172,7 @@ fn test_docker_command_weather_none() {
 #[test]
 fn test_docker_command_difficulty_none() {
     let Some(mut executor) = get_executor() else {
-        return;
+        panic!("Fail to get rcon executor");
     };
     let feedback = executor
         .difficulty("easy")
@@ -182,7 +184,7 @@ fn test_docker_command_difficulty_none() {
 #[test]
 fn test_docker_command_ban_none() {
     let Some(mut executor) = get_executor() else {
-        return;
+        panic!("Fail to get rcon executor");
     };
     let feedback = executor
         .ban("zi_min", Some("no reason"))
@@ -196,7 +198,7 @@ fn test_docker_command_ban_none() {
         false
     };
     assert!(result);
-
+    sleep(Duration::from_secs(5));
     let feedback = executor
         .ban("zi_min", Some("no reason"))
         .expect("ban command push fail");
@@ -209,7 +211,7 @@ fn test_docker_command_ban_none() {
         false
     };
     assert!(result);
-
+    sleep(Duration::from_secs(5));
     let feedback = executor
         .pardon("zi_min")
         .expect("ban command push fail");
@@ -218,7 +220,7 @@ fn test_docker_command_ban_none() {
         feedback,
         TargetStatus::Success(TargetStatusSuccess::Success)
     );
-
+    sleep(Duration::from_secs(5));
 
     let feedback = executor
         .pardon("zi_min")
@@ -233,13 +235,14 @@ fn test_docker_command_ban_none() {
 #[test]
 fn test_docker_command_whitelist_operation_none() {
     let Some(mut executor) = get_executor() else {
-        return;
+        panic!("Fail to get rcon executor");
     };
     let feedback = executor
         .whitelist()
         .expect("whitelist command push fail");
     dbg!(&feedback);
     assert_eq!(feedback, None);
+    sleep(Duration::from_secs(5));
 
     let feedback = executor
         .whitelist_add("zi_min")
@@ -249,7 +252,7 @@ fn test_docker_command_whitelist_operation_none() {
         feedback,
         TargetStatus::Success(TargetStatusSuccess::Success)
     );
-
+    sleep(Duration::from_secs(5));
 
     let feedback = executor
         .whitelist_add("zi_min")
@@ -263,7 +266,7 @@ fn test_docker_command_whitelist_operation_none() {
         false
     };
     assert!(result);
-
+    sleep(Duration::from_secs(5));
 
     let feedback = executor
         .whitelist_remove("zi_min")
@@ -273,7 +276,7 @@ fn test_docker_command_whitelist_operation_none() {
         feedback,
         TargetStatus::Success(TargetStatusSuccess::Success)
     );
-
+    sleep(Duration::from_secs(5));
 
     let feedback = executor
         .whitelist_remove("zi_min")
@@ -292,7 +295,7 @@ fn test_docker_command_whitelist_operation_none() {
 #[test]
 fn test_docker_command_op_none() {
     let Some(mut executor) = get_executor() else {
-        return;
+        panic!("Fail to get rcon executor");
     };
     let feedback = executor.op("zi_min").expect("op command push fail");
     dbg!(&feedback);
@@ -304,7 +307,7 @@ fn test_docker_command_op_none() {
         false
     };
     assert!(result);
-
+    sleep(Duration::from_secs(5));
     let feedback = executor.op("zi_min").expect("op command push fail");
     dbg!(&feedback);
     let result = if feedback == TargetStatus::Success(TargetStatusSuccess::Success)
@@ -315,14 +318,14 @@ fn test_docker_command_op_none() {
         false
     };
     assert!(result);
-
+    sleep(Duration::from_secs(5));
     let feedback = executor.deop("zi_min").expect("op command push fail");
     dbg!(&feedback);
     assert_eq!(
         feedback,
         TargetStatus::Success(TargetStatusSuccess::Success)
     );
-
+    sleep(Duration::from_secs(5));
     let feedback = executor.deop("zi_min").expect("op command push fail");
     dbg!(&feedback);
     assert_eq!(
