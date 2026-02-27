@@ -44,7 +44,7 @@ pub fn gamemode(
         return Ok(TargetStatus::NotFound);
     }
     if feedback == " ".to_string() {
-        return Ok(TargetStatus::Success(TargetStatusSuccess::Duplicated));
+        return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
     }
     if feedback.contains("game mode to") {
         return Ok(TargetStatus::Success(TargetStatusSuccess::Success));

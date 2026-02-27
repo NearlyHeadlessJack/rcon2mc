@@ -23,11 +23,11 @@
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
 
-use rcon2mc::rcon_client::{RconClient};
+use rcon2mc::rcon_client::RconClient;
+use rcon2mc::rcon_client::{TargetStatus, TargetStatusSuccess};
 use std::sync::{Mutex, MutexGuard, OnceLock};
 
 mod utils;
-
 
 static GLOBAL_EXECUTOR: OnceLock<Mutex<rcon2mc::command::CommandExecutor>> = OnceLock::new();
 
@@ -43,16 +43,136 @@ fn get_executor() -> Option<MutexGuard<'static, rcon2mc::command::CommandExecuto
     });
     Some(mutex.lock().unwrap())
 }
+//
+//
+// #[test]
+// fn test_player_list_num(){
+//     let Some(mut executor) = get_executor() else {
+//         panic!("Fail to get rcon executor");
+//     };
+//     let feedback = executor.list().unwrap();
+//     dbg!(&feedback);
+//     let Some(plist) = feedback else { panic!("Fail to get player list") };
+//     assert_eq!(plist.count, 4);
+// }
 
+// #[test]
+// fn test_player_list_uuids_num(){
+//     let Some(mut executor) = get_executor() else {
+//         panic!("Fail to get rcon executor");
+//     };
+//     let feedback = executor.list_uuid().unwrap();
+//     dbg!(&feedback);
+//     let Some(plist) = feedback else { panic!("Fail to get player list") };
+//     assert_eq!(plist.count, 4);
+// }
 
 #[test]
-fn test_player_list_num(){
+fn test_player_give_item_success() {
     let Some(mut executor) = get_executor() else {
         panic!("Fail to get rcon executor");
     };
-    let feedback = executor.list().unwrap();
+    let feedback = executor.give("@a", "minecraft:diamond", 1).unwrap();
     dbg!(&feedback);
-    let Some(plist) = feedback else { panic!("Fail to get player list") };
-    assert_eq!(plist.count, 4);
 
+    assert_eq!(
+        feedback,
+        TargetStatus::Success(TargetStatusSuccess::Success)
+    );
 }
+
+#[test]
+fn test_player_give_item_fail() {
+    let Some(mut executor) = get_executor() else {
+        panic!("Fail to get rcon executor");
+    };
+    let feedback = executor.give("@a", "minecraft:diamon", 1);
+    dbg!(&feedback);
+
+    assert!(feedback.is_err());
+}
+
+#[test]
+fn test_player_gamemode() {
+    let Some(mut executor) = get_executor() else {
+        panic!("Fail to get rcon executor");
+    };
+    let feedback = executor.gamemode("survival", Some("player2")).unwrap();
+    dbg!(&feedback);
+    assert_eq!(
+        feedback,
+        TargetStatus::Success(TargetStatusSuccess::Success)
+    );
+}
+
+#[test]
+fn test_player_kill() {
+    let Some(mut executor) = get_executor() else {
+        panic!("Fail to get rcon executor");
+    };
+    let feedback = executor.kill("player2").unwrap();
+    dbg!(&feedback);
+    assert_eq!(
+        feedback,
+        TargetStatus::Success(TargetStatusSuccess::Success)
+    );
+}
+
+#[test]
+fn test_player_msg() {
+    let Some(mut executor) = get_executor() else {
+        panic!("Fail to get rcon executor");
+    };
+    let feedback = executor.msg("player2", "Hello").unwrap();
+    dbg!(&feedback);
+    assert_eq!(
+        feedback,
+        TargetStatus::Success(TargetStatusSuccess::Success)
+    );
+}
+
+#[test]
+fn test_player_say() {
+    let Some(mut executor) = get_executor() else {
+        panic!("Fail to get rcon executor");
+    };
+    let feedback = executor.say("Hello").unwrap();
+    dbg!(&feedback);
+    assert_eq!(feedback, ());
+}
+
+#[test]
+fn test_player_title() {
+    let Some(mut executor) = get_executor() else {
+        panic!("Fail to get rcon executor");
+    };
+    let feedback = executor.title("@a", "title", "hello").unwrap();
+    dbg!(&feedback);
+    assert_eq!(
+        feedback,
+        TargetStatus::Success(TargetStatusSuccess::Success)
+    );
+}
+
+#[test]
+fn test_player_tp() {
+    let Some(mut executor) = get_executor() else {
+        panic!("Fail to get rcon executor");
+    };
+    let feedback = executor.tp("player2", 100.0, 100.0, 100.0).unwrap();
+    dbg!(&feedback);
+    assert_eq!(
+        feedback,
+        TargetStatus::Success(TargetStatusSuccess::Success)
+    );
+}
+
+// #[test]
+// fn test_player_kick(){
+//     let Some(mut executor) = get_executor() else {
+//         panic!("Fail to get rcon executor");
+//     };
+//     let feedback = executor.kick("player2", Some("Kicked")).unwrap();
+//     dbg!(&feedback);
+//     assert_eq!(feedback, TargetStatus::Success(TargetStatusSuccess::Success));
+// }

@@ -50,7 +50,15 @@ pub fn give(
     if feedback.contains("Gave") {
         return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
     }
+    if feedback.contains("Given") {
+        return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
+    }
     if feedback.contains("Unknown item") {
+        return Err(RconError::UnknownParserError(
+            "Unknown item".to_string().to_string(),
+        ));
+    }
+    if feedback.contains("no such item with name") {
         return Err(RconError::UnknownParserError(
             "Unknown item".to_string().to_string(),
         ));

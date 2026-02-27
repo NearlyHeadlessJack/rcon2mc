@@ -84,6 +84,9 @@ pub fn title(
     if feedback.contains("Showing new") {
         return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
     }
+    if feedback.contains("Title command successfully") {
+        return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
+    }
     Err(RconError::UnknownParserError(
         format!(
             "Unknown error when {} {} to {}.",
