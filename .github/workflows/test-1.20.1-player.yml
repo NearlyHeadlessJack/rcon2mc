@@ -24,9 +24,9 @@ jobs:
           chmod 777 mc-client
       - name: Running Minecraft-cli-Client
         run: |
-          nohup ./mc-client player1 - 127.0.0.1:25565 > script1.log 2>&1 &
-          nohup ./mc-client player2 - 127.0.0.1:25565 > script2.log 2>&1 &
-          nohup ./mc-client player3 - 127.0.0.1:25565 > script3.log 2>&1 &
+          screen -dmS mysession1 bash -c "./mc-client player1 - 127.0.0.1:25565 > script1.log 2>&1"
+          screen -dmS mysession2 bash -c "./mc-client player2 - 127.0.0.1:25565 > script2.log 2>&1"
+          screen -dmS mysession3 bash -c "./mc-client player3 - 127.0.0.1:25565 > script3.log 2>&1"
 
       - name: Run Tests
         run: |
