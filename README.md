@@ -1,3 +1,4 @@
+English | [简体中文](./docs/readme_zh-CN.md)
 <div align="center">
 <img src="./docs/assets/logo.png" width=50%>
 
@@ -10,7 +11,7 @@
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/nearlyheadlessjack/rcon2mc/publish-workflow.yml?branch=main&style=for-the-badge&label=build)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/nearlyheadlessjack/rcon2mc/publish-workflow.yml?style=for-the-badge&label=testing&color=blue)
 
-### rcon<sup>2mc</sup> is a Minecraft [RCON protocol](https://developer.valvesoftware.com/wiki/Source_RCON_Protocol) client library written in Rust, used for executing commands remotely on a Java Edition Minecraft server.
+### rcon<sup>2mc</sup> is a Minecraft [RCON protocol](https://developer.valvesoftware.com/wiki/Source_RCON_Protocol) client library in Rust, used for executing commands remotely on a Java Edition Minecraft server.
 
 ### Additionally, rcon<sup>2mc</sup> includes built-in wrappers for some Minecraft commands, allowing you to directly call these methods to execute commands.
 </div>  

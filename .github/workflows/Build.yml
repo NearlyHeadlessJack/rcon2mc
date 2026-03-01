@@ -47,5 +47,5 @@ jobs:
       - name: Release to Github
         uses: softprops/action-gh-release@v2
         with:
-          body_path: changelogs/v0.1.x.md
+          body_path: changelogs/v0.0.x.md
 
