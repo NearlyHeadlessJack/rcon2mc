@@ -1,3 +1,4 @@
+[English](./docs/readme.md) | 简体中文
 <div align="center">
 <img src="./docs/assets/logo.png" width=50%>
 
