@@ -23,10 +23,33 @@
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
 
-pub mod command;
-mod connect;
-pub mod error;
-mod packet;
-mod parser;
-mod rcon;
-pub mod rcon_client;
+use crate::error::RconError;
+use crate::parser::utils::check_invalid_command;
+use crate::rcon_client::RconClient;
+
+pub fn stop(client: &mut RconClient) -> Result<(), RconError> {
+    let feedback = client.send("stop".to_string())?;
+    check_invalid_command(&feedback)?;
+    Ok(())
+}
+
+pub fn save(client: &mut RconClient, save_type: &str) -> Result<(), RconError> {
+    match save_type {
+        "all" => {
+            let feedback = client.send("save-all".to_string())?;
+            check_invalid_command(&feedback)?;
+            Ok(())
+        }
+        "off" => {
+            let feedback = client.send("save-off".to_string())?;
+            check_invalid_command(&feedback)?;
+            Ok(())
+        }
+        "on" => {
+            let feedback = client.send("save-on".to_string())?;
+            check_invalid_command(&feedback)?;
+            Ok(())
+        }
+        _ => Err(RconError::InvalidCommandError),
+    }
+}

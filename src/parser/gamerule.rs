@@ -22,11 +22,37 @@
  * // Author: Jack Wang <wang@rjack.cn>
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
+use crate::error::RconError;
+use crate::parser::utils::check_invalid_command;
+use crate::rcon_client::RconClient;
 
-pub mod command;
-mod connect;
-pub mod error;
-mod packet;
-mod parser;
-mod rcon;
-pub mod rcon_client;
+pub fn gamerule(
+    client: &mut RconClient,
+    gamerule_name: &str,
+    value: &str,
+) -> Result<(), RconError> {
+    let command = format!("gamerule {} {}", gamerule_name, value);
+    let feedback = client.send(command.to_string())?;
+    check_invalid_command(&feedback)?;
+    if feedback.contains("Incorrect") {
+        return Err(RconError::UnknownParserError(
+            "Incorrect gamerule name".to_string(),
+        ));
+    }
+    if feedback.contains("Expected") {
+        return Err(RconError::UnknownParserError(
+            "Incorrect gamerule value".to_string(),
+        ));
+    }
+
+    if feedback.contains("is now set to:") {
+        return Ok(());
+    }
+    Err(RconError::UnknownParserError(
+        format!(
+            "Unknown error when set gamerule {} to {}",
+            gamerule_name, value
+        )
+        .to_string(),
+    ))
+}

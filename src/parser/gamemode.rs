@@ -23,10 +23,38 @@
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
 
-pub mod command;
-mod connect;
-pub mod error;
-mod packet;
-mod parser;
-mod rcon;
-pub mod rcon_client;
+use crate::error::RconError;
+use crate::parser::utils::{check_invalid_argument, check_invalid_command};
+use crate::rcon_client::RconClient;
+use crate::rcon_client::{TargetStatus, TargetStatusSuccess};
+
+pub fn gamemode(
+    client: &mut RconClient,
+    gamemode_name: &str,
+    target: Option<&str>,
+) -> Result<TargetStatus, RconError> {
+    let arguments = vec!["survival", "creative", "adventure", "spectator"];
+    check_invalid_argument(gamemode_name, arguments)?;
+
+    let command = format!("gamemode {} {}", gamemode_name, target.unwrap_or("@a"));
+
+    let feedback = client.send(command.to_string())?;
+    check_invalid_command(&feedback)?;
+    if feedback.contains("No player was found") {
+        return Ok(TargetStatus::NotFound);
+    }
+    if feedback == " ".to_string() {
+        return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
+    }
+    if feedback.contains("game mode to") {
+        return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
+    }
+    Err(RconError::UnknownParserError(
+        format!(
+            "Unknown error when change player {} gamemode to {}.",
+            target.unwrap_or("@a"),
+            gamemode_name
+        )
+        .to_string(),
+    ))
+}
