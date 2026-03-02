@@ -1,0 +1,51 @@
+name: publish-workflow.yml
+on:
+  push:
+    paths:
+      - .github/workflows/**
+      - src/**
+      - tests/**
+      - Cargo.toml
+      - Cargo.lock
+
+env:
+  IS_RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') }}
+
+jobs:
+  testing-no-player:
+    uses: ./.github/workflows/TestingWithoutPlayer.yml
+    name:  Testing Without Players
+
+  testing-with-player:
+    uses: ./.github/workflows/TestingWithPlayer.yml
+    name: Testing With Players
+
+  publish-to-crates:
+    runs-on: ubuntu-latest
+    needs:
+      - testing-with-player
+      - testing-no-player
+    permissions:
+      id-token: write
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v6
+      - name: Publish to Crates.io
+        run: |
+          cargo publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+  publish-to-github:
+    runs-on: ubuntu-latest
+    needs: [publish-to-crates]
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Release to Github
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: changelogs/v0.0.x.md
+

@@ -1,0 +1,25 @@
+name: test-1.16.5.yml
+on:
+  workflow_call:
+
+env:
+  GITHUB_ACTIONS: true
+  RCON_TEST_MC_VERSION: "1.16.5"
+  RUST_BACKTRACE: "1"
+
+jobs:
+  testing-1-16-5:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Docker
+        run: |
+          docker pull ghcr.io/nearlyheadlessjack/mc-test:1.16.5.1
+          docker run -d --name mc-test --network host ghcr.io/nearlyheadlessjack/mc-test:1.16.5.1
+          sleep 8s
+
+      - name: Run Tests
+        run: |
+          cargo test --test test_docker_rcon_connection -- --test-threads=1
+          cargo test --test test_docker_command_no_player -- --test-threads=1 --nocapture
