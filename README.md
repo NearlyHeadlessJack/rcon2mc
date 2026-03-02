@@ -1,6 +1,6 @@
 English | [简体中文](./docs/readme_zh-CN.md)
 <div align="center">
-<img src="./docs/assets/logo.png" width=50%>
+<img src="https://raw.githubusercontent.com/NearlyHeadlessJack/rcon2mc/refs/heads/dev/docs/assets/logo.png" width=50%>
 
 # rcon<sup>2mc</sup>
 [![Crates.io License](https://img.shields.io/crates/l/rcon2mc?style=for-the-badge)](https://github.com/NearlyHeadlessJack/rcon2mc/blob/main/LICENSE)
@@ -18,9 +18,9 @@ English | [简体中文](./docs/readme_zh-CN.md)
 
 -----------   
 
-# Examples
-## Direct Usage `rcon.send`
-(Compatible with all Minecraft versions between `1.9` and `26.1`)
+# Usage
+### Direct Usage `rcon.send`
+(Compatible with all Minecraft versions from`1.9` to `26.1`)
 
 ```rust
 use rcon2mc::rcon_client::RconClient;
@@ -36,7 +36,7 @@ fn main(){
 }
 ```
 
-## Using Wrapper Commands for Flexible Handling ``rcon.command``
+### Using Wrapper Commands for Flexible Handling ``rcon.command``
 Tested on 1.12.2, 1.16.5, 1.20.1, 1.21.11, and 26.1
 ```rust
 use rcon2mc::rcon_client::RconClient;
@@ -65,3 +65,5 @@ fn main(){
 
 For specific built-in wrapper commands, please refer to the documentation.
 
+# License
+This project is licensed under the MIT License.

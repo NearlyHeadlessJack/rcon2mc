@@ -1,6 +1,6 @@
 [English](./docs/readme.md) | 简体中文
 <div align="center">
-<img src="./docs/assets/logo.png" width=50%>
+<img src="https://raw.githubusercontent.com/NearlyHeadlessJack/rcon2mc/refs/heads/dev/docs/assets/logo.png" width=50%>
 
 # rcon<sup>2mc</sup>
 [![Crates.io License](https://img.shields.io/crates/l/rcon2mc?style=for-the-badge)](https://github.com/NearlyHeadlessJack/rcon2mc/blob/main/LICENSE)

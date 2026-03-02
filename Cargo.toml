@@ -1,10 +1,11 @@
 [package]
 name = "rcon2mc"
-version = "0.0.1-rc1"
+version = "0.0.2"
 edition = "2024"
 description = "A Rcon Client lib for Minecraft Server."
 license = "MIT"
 repository = "https://github.com/NearlyHeadlessJack/rcon2mc"
+documentation = "https://docs.rs/rcon2mc"
 authors = ["NearlyHeadlessJack <wang@rjack.cn>"]
 keywords = ["rcon", "minecraft", "http", "cli"]
 readme = "README.md"

@@ -90,7 +90,7 @@ dependencies = [
 
 [[package]]
 name = "rcon2mc"
-version = "0.0.1-rc1"
+version = "0.0.2"
 dependencies = [
  "rand",
  "thiserror",
