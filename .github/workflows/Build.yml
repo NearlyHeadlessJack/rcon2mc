@@ -1,4 +1,4 @@
-name: publish-workflow.yml
+name: Build.yml
 on:
   push:
     paths:
