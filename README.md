@@ -17,7 +17,7 @@ English | [简体中文](./docs/readme_zh_CN.md)
 
 ## Usage
 ### Direct Usage `rcon.send`
-(Compatible with all Minecraft versions from`1.9` to `26.1`)
+(Compatible with **all** Minecraft versions from`1.9` to `26.1`)
 
 ```rust
 use rcon2mc::rcon_client::RconClient;
@@ -33,7 +33,7 @@ fn main(){
 }
 ```
 
-### Using Wrapper Commands for Flexible Handling ``rcon.command``
+### Using Wrapper Commands for Handling Result
 Tested on 1.12.2, 1.16.5, 1.20.1, 1.21.11, and 26.1
 ```rust
 use rcon2mc::rcon_client::RconClient;
