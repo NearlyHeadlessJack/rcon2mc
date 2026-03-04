@@ -17,7 +17,7 @@
 
 ## 示例
 ### 直接使用  
-（兼容`1.9`-`26.1`之间的所有Minecraft版本）
+（兼容`1.9`-`26.1`之间的**所有**Minecraft版本）
 
 ```rust
 use rcon2mc::rcon_client::RconClient;
