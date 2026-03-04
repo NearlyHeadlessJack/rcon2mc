@@ -63,7 +63,7 @@ fn main(){
 For specific built-in wrapper commands, please refer to the [documentation](https://docs.rs/rcon2mc/latest/rcon2mc/command/struct.CommandExecutor.html).
 
 
-# Testings for Commands in Different Versions
+# Testings for built-in Commands in Different Versions
 
 `TBD`: Not tested yet  
 `Y`: Tested Successfully  

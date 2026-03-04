@@ -62,7 +62,7 @@ fn main(){
 ```
 具体内置封装命令，请见[文档](https://docs.rs/rcon2mc/latest/rcon2mc/command/struct.CommandExecutor.html)。
 
-# Testings for Commands in Different Versions
+# 内置命令在各种版本下测试情况
 
 `TBD`: 暂未进行测试
 `Y`: 测试成功 
