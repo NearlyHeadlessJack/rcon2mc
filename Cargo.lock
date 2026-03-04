@@ -22,7 +22,9 @@ dependencies = [
 
 [[package]]
 name = "rcon2mc"
+
 version = "0.0.5"
+
 dependencies = [
  "thiserror",
 ]

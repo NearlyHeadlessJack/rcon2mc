@@ -1,5 +1,6 @@
 [package]
 name = "rcon2mc"
+
 version = "0.0.5"
 edition = "2024"
 description = "A RCON client lib for Minecraft server."
@@ -8,7 +9,9 @@ repository = "https://github.com/NearlyHeadlessJack/rcon2mc"
 documentation = "https://docs.rs/rcon2mc"
 authors = ["NearlyHeadlessJack <wang@rjack.cn>"]
 keywords = ["rcon", "minecraft", "parser"]
+
 categories = ["network-programming","game-development"]
+
 readme = "README.md"
 exclude = ["target/", "examples/", "tests/",".github/","test/","src/bin/"]
 
