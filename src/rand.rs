@@ -22,12 +22,47 @@
  * // Author: Jack Wang <wang@rjack.cn>
  * // GitHub: https://github.com/nearlyheadlessjack/rcon2mc
  */
+use std::cell::RefCell;
+use std::time::{SystemTime, UNIX_EPOCH};
 
-pub mod command;
-mod connect;
-pub mod error;
-mod packet;
-mod parser;
-mod rand;
-mod rcon;
-pub mod rcon_client;
+thread_local! {
+    static RNG_STATE: RefCell<u64> = const { RefCell::new(0) };
+}
+
+#[inline]
+fn xorshift64(state: &mut u64) -> u64 {
+    let mut x = *state;
+    x ^= x << 13;
+    x ^= x >> 7;
+    x ^= x << 17;
+    *state = x;
+    x
+}
+
+fn init_seed() -> u64 {
+    let dur = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("系统时间早于 UNIX_EPOCH");
+    let seed = dur.as_nanos() as u64;
+    if seed == 0 {
+        1
+    } else {
+        seed
+    }
+}
+
+pub fn gen_rand_i32(lower: i32, upper: i32) -> i32 {
+    let range = (upper as i64 - lower as i64 + 1) as u64;
+    debug_assert!(range > 0, "lower 必须小于等于 upper");
+
+    RNG_STATE.with(|cell| {
+        let mut state = cell.borrow_mut();
+        if *state == 0 {
+            *state = init_seed();
+        }
+
+        let rand_val = xorshift64(&mut *state); // 0 ..= u64::MAX
+        let offset = (rand_val % range) as i64; // 0 .. range-1
+        (lower as i64 + offset) as i32
+    })
+}

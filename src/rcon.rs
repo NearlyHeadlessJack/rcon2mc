@@ -26,7 +26,7 @@
 use crate::connect::ConnectManager;
 use crate::error::RconError;
 use crate::packet::{PacketWithoutSize, ReceivedBPacketList};
-use rand::Rng;
+use crate::rand::gen_rand_i32;
 
 #[derive(Debug)]
 pub struct Rcon {
@@ -51,7 +51,7 @@ impl Rcon {
 
     /// Verify whether the information can pass authentication through the rcon server.
     fn auth(&self) -> Result<bool, RconError> {
-        let random_id: i32 = rand::rng().random_range(1..=1000);
+        let random_id: i32 = gen_rand_i32(1, 1000);
         let mut socket =
             create_rcon_connection(self.host.clone(), self.port, self.timeout, self.buffer_size)?;
         socket.send_auth(&self.password, random_id as usize)?;
@@ -66,7 +66,7 @@ impl Rcon {
     }
 
     fn auth_for_exec(&self, socket: &mut ConnectManager) -> Result<bool, RconError> {
-        let random_id: i32 = rand::rng().random_range(1..=1000);
+        let random_id: i32 = gen_rand_i32(1, 1000);
         socket.send_auth(&self.password, random_id as usize)?;
         let response_list = parser_response(socket)?;
 
