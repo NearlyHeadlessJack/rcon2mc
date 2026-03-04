@@ -1,4 +1,4 @@
-[English](./docs/readme.md) | 简体中文
+[English](https://github.com/NearlyHeadlessJack/rcon2mc) | 简体中文
 <div align="center">
 <img src="https://raw.githubusercontent.com/NearlyHeadlessJack/rcon2mc/refs/heads/dev/docs/assets/logo.png" width=50%>
 
@@ -6,14 +6,11 @@
 [![Crates.io License](https://img.shields.io/crates/l/rcon2mc?style=for-the-badge)](https://github.com/NearlyHeadlessJack/rcon2mc/blob/main/LICENSE)
 [![Crates.io Version](https://img.shields.io/crates/v/rcon2mc?style=for-the-badge&logo=rust)](https://crates.io/crates/rcon2mc)
 [![docs.rs](https://img.shields.io/docsrs/rcon2mc?style=for-the-badge&logo=rust)](https://docs.rs/rcon2mc/latest/rcon2mc/)
-[![GitHub contributors](https://img.shields.io/github/contributors/nearlyheadlessjack/rcon2mc?style=for-the-badge&logo=github)
-](https://github.com/NearlyHeadlessJack/rcon2mc/graphs/contributors)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/nearlyheadlessjack/rcon2mc/publish-workflow.yml?branch=main&style=for-the-badge&label=build)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/nearlyheadlessjack/rcon2mc/publish-workflow.yml?style=for-the-badge&label=testing&color=blue)
+[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/nearlyheadlessjack/rcon2mc/publish-workflow.yml?style=for-the-badge&label=testing&color=blue)](https://github.com/NearlyHeadlessJack/rcon2mc/actions)
 
-### rcon<sup>2mc</sup>是一个Rust语言编写的Minecraft [RCON协议](https://developer.valvesoftware.com/wiki/Source_RCON_Protocol)客户端库，用于远程在Java版Minecraft服务器上执行命令。      
+#### rcon<sup>2mc</sup>是一个Rust语言编写的Minecraft [RCON协议](https://developer.valvesoftware.com/wiki/Source_RCON_Protocol)客户端库，用于远程在Java版Minecraft服务器上执行命令。      
   
-### 同时，rcon<sup>2mc</sup>内置部分Minecraft命令的封装，您可以直接调用这些方法来执行命令。
+#### 同时，rcon<sup>2mc</sup>内置部分Minecraft命令的封装，您可以直接调用这些方法来执行命令。
 </div>  
 
 -----------   
@@ -63,7 +60,8 @@ fn main(){
     
 }
 ```
-具体内置封装命令，请见文档。
+具体内置封装命令，请见[文档](https://docs.rs/rcon2mc/latest/rcon2mc/command/struct.CommandExecutor.html)。
+
 
 
 
