@@ -15,7 +15,7 @@ English | [简体中文](./docs/readme_zh_CN.md)
 
 -----------   
 
-# Usage
+## Usage
 ### Direct Usage `rcon.send`
 (Compatible with all Minecraft versions from`1.9` to `26.1`)
 
@@ -63,7 +63,7 @@ fn main(){
 For specific built-in wrapper commands, please refer to the [documentation](https://docs.rs/rcon2mc/latest/rcon2mc/command/struct.CommandExecutor.html).
 
 
-# Testings for built-in Commands in Different Versions
+## Testings for built-in Commands in Different Versions
 
 `TBD`: Not tested yet  
 `Y`: Tested Successfully  
@@ -545,7 +545,7 @@ For specific built-in wrapper commands, please refer to the [documentation](http
 </body>
 
 
-# License
+## License
 This project is licensed under the MIT License.
 
 

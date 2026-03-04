@@ -15,8 +15,8 @@
 
 -----------   
 
-# 示例
-## 直接使用  
+## 示例
+### 直接使用  
 （兼容`1.9`-`26.1`之间的所有Minecraft版本）
 
 ```rust
@@ -33,7 +33,7 @@ fn main(){
 }
 
 ```
-## 使用封装命令来灵活处理
+### 使用封装命令来灵活处理
 （在1.12.2, 1.16.5, 1.20.1, 1.21.11和26.1中测试通过）
 
 ```rust
@@ -62,7 +62,7 @@ fn main(){
 ```
 具体内置封装命令，请见[文档](https://docs.rs/rcon2mc/latest/rcon2mc/command/struct.CommandExecutor.html)。
 
-# 内置命令在各种版本下测试情况
+## 内置命令在各种版本下测试情况
 
 `TBD`: 暂未进行测试
 `Y`: 测试成功 
@@ -544,7 +544,7 @@ fn main(){
 </body>
 
 
-# License
+## License
 This project is licensed under the MIT License.
 
 
