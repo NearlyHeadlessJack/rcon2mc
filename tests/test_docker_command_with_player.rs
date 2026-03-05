@@ -44,26 +44,29 @@ fn get_executor() -> Option<MutexGuard<'static, rcon2mc::command::CommandExecuto
     Some(mutex.lock().unwrap())
 }
 
-
 #[test]
-fn test_player_list_num(){
+fn test_player_list_num() {
     let Some(mut executor) = get_executor() else {
         panic!("Fail to get rcon executor");
     };
     let feedback = executor.list().unwrap();
     dbg!(&feedback);
-    let Some(plist) = feedback else { panic!("Fail to get player list") };
+    let Some(plist) = feedback else {
+        panic!("Fail to get player list")
+    };
     assert_eq!(plist.count, 4);
 }
 
 #[test]
-fn test_player_list_uuids_num(){
+fn test_player_list_uuids_num() {
     let Some(mut executor) = get_executor() else {
         panic!("Fail to get rcon executor");
     };
     let feedback = executor.list_uuid().unwrap();
     dbg!(&feedback);
-    let Some(plist) = feedback else { panic!("Fail to get player list") };
+    let Some(plist) = feedback else {
+        panic!("Fail to get player list")
+    };
     assert_eq!(plist.count, 4);
 }
 

@@ -43,6 +43,9 @@ pub fn gamemode(
     if feedback.contains("No player was found") {
         return Ok(TargetStatus::NotFound);
     }
+    if feedback.contains("cannot be found") {
+        return Ok(TargetStatus::NotFound);
+    }
     if feedback == " ".to_string() {
         return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
     }

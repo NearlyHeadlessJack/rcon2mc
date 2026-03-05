@@ -211,7 +211,7 @@ fn test_docker_command_ban_none() {
     };
     assert!(result);
     sleep(Duration::from_secs(5));
-    let feedback = executor.pardon("zi_min").expect("ban command push fail");
+    let feedback = executor.pardon("zi_min").expect("pardon command push fail");
     dbg!(&feedback);
     assert_eq!(
         feedback,
@@ -219,7 +219,59 @@ fn test_docker_command_ban_none() {
     );
     sleep(Duration::from_secs(5));
 
-    let feedback = executor.pardon("zi_min").expect("ban command push fail");
+    let feedback = executor.pardon("zi_min").expect("pardon command push fail");
+    dbg!(&feedback);
+    assert_eq!(
+        feedback,
+        TargetStatus::Success(TargetStatusSuccess::Duplicated)
+    );
+}
+
+/// 1.12.2测试，重复封禁仍使用旧信息，不会提示重复信息
+#[test]
+fn test_docker_command_ban_ip_none() {
+    let Some(mut executor) = get_executor() else {
+        panic!("Fail to get rcon executor");
+    };
+    let feedback = executor
+        .ban_ip("192.168.1.1", Some("no reason"))
+        .expect("ban-ip command push fail");
+    dbg!(&feedback);
+    let result = if feedback == TargetStatus::Success(TargetStatusSuccess::Success)
+        || feedback == TargetStatus::Success(TargetStatusSuccess::Duplicated)
+    {
+        true
+    } else {
+        false
+    };
+    assert!(result);
+    sleep(Duration::from_secs(5));
+    let feedback = executor
+        .ban_ip("192.168.1.1", Some("no reason"))
+        .expect("ban-ip command push fail");
+    dbg!(&feedback);
+    let result = if feedback == TargetStatus::Success(TargetStatusSuccess::Success)
+        || feedback == TargetStatus::Success(TargetStatusSuccess::Duplicated)
+    {
+        true
+    } else {
+        false
+    };
+    assert!(result);
+    sleep(Duration::from_secs(5));
+    let feedback = executor
+        .pardon_ip("192.168.1.1")
+        .expect("pardon-ip command push fail");
+    dbg!(&feedback);
+    assert_eq!(
+        feedback,
+        TargetStatus::Success(TargetStatusSuccess::Success)
+    );
+    sleep(Duration::from_secs(5));
+
+    let feedback = executor
+        .pardon_ip("192.168.1.1")
+        .expect("pardon-ip command push fail");
     dbg!(&feedback);
     assert_eq!(
         feedback,
@@ -325,4 +377,36 @@ fn test_docker_command_op_none() {
         feedback,
         TargetStatus::Success(TargetStatusSuccess::Duplicated)
     );
+}
+
+#[test]
+fn test_docker_command_gamemode_none() {
+    let Some(mut executor) = get_executor() else {
+        panic!("Fail to get rcon executor");
+    };
+    let feedback = executor
+        .gamemode("creative", Some("player1"))
+        .expect("gamemode command push fail");
+    dbg!(&feedback);
+    assert_eq!(feedback, TargetStatus::NotFound)
+}
+
+#[test]
+fn test_docker_command_list_none() {
+    let Some(mut executor) = get_executor() else {
+        panic!("Fail to get rcon executor");
+    };
+    let feedback = executor.list().expect("list command push fail");
+    dbg!(&feedback);
+    assert_eq!(feedback, None)
+}
+
+#[test]
+fn test_docker_command_list_uuid_none() {
+    let Some(mut executor) = get_executor() else {
+        panic!("Fail to get rcon executor");
+    };
+    let feedback = executor.list_uuid().expect("list uuid command push fail");
+    dbg!(&feedback);
+    assert_eq!(feedback, None)
 }
