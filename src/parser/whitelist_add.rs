@@ -33,6 +33,7 @@ pub fn whitelist_add(client: &mut RconClient, player: &str) -> Result<TargetStat
 
     let feedback = client.send(command.to_string())?;
     check_invalid_command(&feedback)?;
+    dbg!(&feedback);
     if feedback.contains("That player does not exist") {
         return Ok(TargetStatus::NotFound);
     }
