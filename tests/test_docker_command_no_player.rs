@@ -26,6 +26,7 @@ use rcon2mc::rcon_client::{RconClient, TargetStatus, TargetStatusSuccess};
 use std::sync::{Mutex, MutexGuard, OnceLock};
 use std::thread::sleep;
 use std::time::Duration;
+
 mod utils;
 
 static GLOBAL_EXECUTOR: OnceLock<Mutex<rcon2mc::command::CommandExecutor>> = OnceLock::new();
@@ -416,4 +417,15 @@ fn test_docker_command_list_uuid_none() {
     let feedback = executor.list_uuid().expect("list uuid command push fail");
     dbg!(&feedback);
     assert_eq!(feedback, None)
+}
+
+#[test]
+fn test_docker_command_whitelist_add_cosyek() {
+    let Some(mut executor) = get_executor() else {
+        panic!("Fail to get rcon executor");
+    };
+    let feedback = executor.whitelist_add("cosyek").expect("list uuid command push fail");
+    dbg!(&feedback);
+    assert_eq!(feedback, TargetStatus::Success(TargetStatusSuccess::Success));
+    let feedback = executor.whitelist_remove("cosyek").expect("list uuid command push fail");
 }
