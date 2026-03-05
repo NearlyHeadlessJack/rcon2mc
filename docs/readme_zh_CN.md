@@ -65,9 +65,12 @@ fn main(){
 
 ## 内置命令在各种版本下测试情况
 
-`TBD`: 暂未进行测试
-`Y`: 测试成功 
-`-`: 不会进行测试
+`TBD`: 暂未进行测试  
+`Y`: 测试成功   
+`-`: 不会进行测试  
+
+> `None-player` test cases are testing commands executing when target is offline or commands that don't require a target.  
+> `Player-online` test cases are testing commands executing when target is online.
 
 <body link="#467886" vlink="#96607D">
 <!--[if !excel]>　　<![endif]-->
@@ -77,7 +80,7 @@ fn main(){
 <!--“从 EXCEL 发布网页”向导开始-->
 <!----------------------------->
 
-<div id="index_24538" align=center x:publishsource="Excel">
+<div id="index_13940" align=center x:publishsource="Excel">
 
 <table border=0 cellpadding=0 cellspacing=0 width=899 style='border-collapse:
  collapse;table-layout:fixed;width:673pt'>
@@ -85,14 +88,14 @@ fn main(){
  <col width=323 style='mso-width-source:userset;mso-width-alt:10325;width:242pt'>
  <col width=87 span=5 style='width:65pt'>
  <tr height=21 style='height:16.0pt'>
-  <td colspan=7 height=21 class=xl63 width=899 style='height:16.0pt;width:673pt'>Command
-  Tests of rcon2mc</td>
+  <td colspan=7 height=21 class=xl63 width=899 style='height:16.0pt;width:673pt'>Test
+  cases for built-in command</td>
  </tr>
  <tr height=21 style='height:16.0pt'>
   <td rowspan=3 height=63 class=xl63 style='height:48.0pt;border-top:none'>command</td>
   <td rowspan=3 class=xl63 style='border-top:none'>argument</td>
-  <td colspan=5 class=xl63 style='border-left:none'>tests
-  &quot;NotFoundError&quot;</td>
+  <td colspan=5 class=xl63 style='border-left:none'>Test cases for none-player
+  server</td>
  </tr>
  <tr height=21 style='height:16.0pt'>
   <td colspan=5 height=21 class=xl63 style='height:16.0pt;border-left:none'>version</td>
@@ -374,7 +377,8 @@ fn main(){
  <tr height=23 style='height:17.0pt'>
   <td rowspan=3 height=65 class=xl69 style='height:49.0pt'>command</td>
   <td rowspan=3 class=xl69>argument</td>
-  <td colspan=5 class=xl69 style='border-left:none'>tests &quot;Success&quot;</td>
+  <td colspan=5 class=xl69 style='border-left:none'>Test cases for
+  players-online server</td>
  </tr>
  <tr height=21 style='height:16.0pt'>
   <td colspan=5 height=21 class=xl63 style='height:16.0pt;border-left:none'>version</td>
