@@ -34,28 +34,14 @@ jobs:
           docker run -d --name mc-cli-4 -e PLAYER_ID=player4 -e MC_PORT=25565 --network host ghcr.io/nearlyheadlessjack/mc-cli-client:1.0.9
           docker logs mc-cli-4
 
-      - name: Run Rcon Connection Test
+      - name: Setup nextest
         run: |
-          sleep 3s
-          cargo test --test test_docker_rcon_connection -- --test-threads=1
-          sleep 3s
-          cargo test --test test_docker_command_with_player -- test_player_list_num -- --test-threads=1 --nocapture
-          sleep 3s
-          cargo test --test test_docker_command_with_player -- test_player_list_uuids_num -- --test-threads=1 --nocapture
-          sleep 3s
-          cargo test --test test_docker_command_with_player -- test_player_give_item_success -- --test-threads=1 --nocapture
-          sleep 3s
-          cargo test --test test_docker_command_with_player -- test_player_give_item_fail -- --test-threads=1 --nocapture
-          sleep 3s
-          cargo test --test test_docker_command_with_player -- test_player_gamemode -- --test-threads=1 --nocapture
-          sleep 3s
-          cargo test --test test_docker_command_with_player -- test_player_kill -- --test-threads=1 --nocapture
-          sleep 3s
-          cargo test --test test_docker_command_with_player -- test_player_msg -- --test-threads=1 --nocapture
-          sleep 3s
-          cargo test --test test_docker_command_with_player -- test_player_say -- --test-threads=1 --nocapture
-          sleep 3s
-          cargo test --test test_docker_command_with_player -- test_player_title -- --test-threads=1 --nocapture
-          sleep 3s
-          cargo test --test test_docker_command_with_player -- test_player_tp -- --test-threads=1 --nocapture
+          cargo install cargo-nextest
+
+      - name: Run Tests
+        env:
+          NEXTEST_PROFILE: ci
+        run: |
+          cargo nextest run -- test_docker_rcon_connection 
+          cargo nextest run -- test_player
           

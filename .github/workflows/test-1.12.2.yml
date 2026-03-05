@@ -19,63 +19,15 @@ jobs:
           docker run -d --name mc-test --network host ghcr.io/nearlyheadlessjack/mc-test:1.12.2.3
           sleep 10s
 
-      - name: Run Rcon Connection Test
+      - name: Setup nextest
         run: |
-          cargo test --test test_docker_rcon_connection -- --test-threads=1
-      - name: run command test whitelist
+          cargo install cargo-nextest
+
+      - name: Run Tests
+        env:
+          NEXTEST_PROFILE: ci
         run: |
-          cargo test --test test_docker_command_no_player -- test_docker_command_whitelist_add_not_found -- --test-threads=1
-          sleep 2s
-      - name: run command test kill
-        run: |
-          cargo test --test test_docker_command_no_player -- test_docker_command_kill_none -- --test-threads=1
-          sleep 2s
-      - name: run command test kick
-        run: |
-          cargo test --test test_docker_command_no_player -- test_docker_command_kick_none -- --test-threads=1
-          sleep 2s
-      - name: run command test give
-        run: |
-          cargo test --test test_docker_command_no_player -- test_docker_command_give_none -- --test-threads=1
-          sleep 2s
-      - name: run command test msg
-        run: |
-          cargo test --test test_docker_command_no_player -- test_docker_command_msg_none -- --test-threads=1
-          sleep 2s
-      - name: run command test say
-        run: |
-          cargo test --test test_docker_command_no_player -- test_docker_command_say_none -- --test-threads=1
-          sleep 2s
-      - name: run command test title
-        run: |
-          cargo test --test test_docker_command_no_player -- test_docker_command_title_none -- --test-threads=1
-          sleep 2s
-      - name: run command test tp
-        run: |
-          cargo test --test test_docker_command_no_player -- test_docker_command_tp_none -- --test-threads=1
-          sleep 2s
-      - name: run command test transfer
-        run: |
-          cargo test --test test_docker_command_no_player -- test_docker_command_transfer_none -- --test-threads=1
-          sleep 2s
-      - name: run command test weather
-        run: |
-          cargo test --test test_docker_command_no_player -- test_docker_command_weather_none -- --test-threads=1
-          sleep 2s
-      - name: run command test difficulty
-        run: |
-          cargo test --test test_docker_command_no_player -- test_docker_command_difficulty_none -- --test-threads=1
-          sleep 2s
-      - name: run command test ban
-        run: |
-          cargo test --test test_docker_command_no_player -- test_docker_command_ban_none -- --test-threads=1
-          sleep 2s
-      - name: run command test whitelist operation
-        run: |
-          cargo test --test test_docker_command_no_player -- test_docker_command_whitelist_operation_none -- --test-threads=1
-          sleep 2s
-      - name: run command test op
-        run: |
-          cargo test --test test_docker_command_no_player -- test_docker_command_op_none -- --test-threads=1
+          cargo nextest run -- test_docker_rcon_connection
+          cargo nextest run -- test_docker_command
 
           
