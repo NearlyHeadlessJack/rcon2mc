@@ -39,7 +39,7 @@ pub struct ConnectManager {
 impl ConnectManager {
     pub fn builder() -> ConnectManagerBuilder {
         ConnectManagerBuilder {
-            max_timeout: Some(2),
+            max_timeout: Some(3),
             buffer_size: Some(2920),
             host: None,
             port: None,

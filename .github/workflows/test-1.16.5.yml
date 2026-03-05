@@ -19,7 +19,12 @@ jobs:
           docker run -d --name mc-test --network host ghcr.io/nearlyheadlessjack/mc-test:1.16.5.1
           sleep 8s
 
+      - name: Setup nextest
+        uses: taiki-e/install-action@nextest
+
       - name: Run Tests
+        env:
+          NEXTEST_PROFILE: ci
         run: |
-          cargo test --test test_docker_rcon_connection -- --test-threads=1
-          cargo test --test test_docker_command_no_player -- --test-threads=1 --nocapture
+          cargo nextest run -- test_docker_rcon_connection
+          cargo nextest run -- test_docker_command

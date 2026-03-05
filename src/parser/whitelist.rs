@@ -54,6 +54,9 @@ pub fn list(client: &mut RconClient) -> Result<Option<PlayerList>, RconError> {
     if feedback.contains("There are 0 of") {
         return Ok(None);
     }
+    if feedback.contains("There are 0/") {
+        return Ok(None);
+    }
     let player_list = feedback
         .trim_whitespace()?
         .trim_linebreak()?
@@ -66,6 +69,9 @@ pub fn list_uuid(client: &mut RconClient) -> Result<Option<PlayerUUIDList>, Rcon
     let mut feedback = client.send("list uuids".to_string())?;
     check_invalid_command(&feedback)?;
     if feedback.contains("There are 0 of") {
+        return Ok(None);
+    }
+    if feedback.contains("There are 0/") {
         return Ok(None);
     }
     let player_list = feedback
