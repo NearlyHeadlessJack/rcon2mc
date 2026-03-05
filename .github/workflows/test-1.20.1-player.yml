@@ -34,7 +34,7 @@ jobs:
 
       - name: Setup nextest
         run: |
-          cargo install cargo-nextest
+          cargo install --locked cargo-nextest
 
       - name: Run Tests
         env:
