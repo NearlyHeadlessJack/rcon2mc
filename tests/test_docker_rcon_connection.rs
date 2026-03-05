@@ -28,7 +28,7 @@ use std::time::Duration;
 mod utils;
 
 #[test]
-fn test_docker_correct_password() {
+fn test_docker_rcon_connection_correct_password() {
     sleep(Duration::from_secs(5));
     let rcon = RconClient::builder()
         .host(utils::consts::host())
@@ -39,7 +39,7 @@ fn test_docker_correct_password() {
 }
 
 #[test]
-fn test_docker_incorrect_password() {
+fn test_docker_rcon_connection_incorrect_password() {
     sleep(Duration::from_secs(5));
     use rcon2mc::error::RconError;
     let mut password = utils::consts::password().clone();
