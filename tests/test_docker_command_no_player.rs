@@ -273,7 +273,7 @@ fn test_docker_command_ban_ip_none() {
         .pardon_ip("192.168.1.1")
         .expect("pardon-ip command push fail");
     dbg!(&feedback);
-    // In 1.12.2 pardon player-id has duplicated
+    // In 1.16.5 and below, pardon player-id has duplicated
     // but pardon-ip shares the same response for Duplicated.
     // Therefore, 1.12.2 parser only return Success
     let result = if feedback == TargetStatus::Success(TargetStatusSuccess::Success)
