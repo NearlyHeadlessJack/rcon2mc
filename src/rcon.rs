@@ -44,7 +44,7 @@ impl Rcon {
             host: None,
             port: Some(25575),
             password: None,
-            timeout: Some(2),
+            timeout: Some(3),
             buffer_size: Some(2900),
         }
     }
