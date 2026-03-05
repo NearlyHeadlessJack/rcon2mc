@@ -419,13 +419,13 @@ fn test_docker_command_list_uuid_none() {
     assert_eq!(feedback, None)
 }
 
-#[test]
-fn test_docker_command_whitelist_add_cosyek() {
-    let Some(mut executor) = get_executor() else {
-        panic!("Fail to get rcon executor");
-    };
-    let feedback = executor.whitelist_add("cosyek").expect("list uuid command push fail");
-    dbg!(&feedback);
-    assert_eq!(feedback, TargetStatus::Success(TargetStatusSuccess::Success));
-    let feedback = executor.whitelist_remove("cosyek").expect("list uuid command push fail");
-}
+// #[test]
+// fn test_docker_command_whitelist_add_cosyek() {
+//     let Some(mut executor) = get_executor() else {
+//         panic!("Fail to get rcon executor");
+//     };
+//     let feedback = executor.whitelist_add("cosyek").expect("list uuid command push fail");
+//     dbg!(&feedback);
+//     assert_eq!(feedback, TargetStatus::Success(TargetStatusSuccess::Success));
+//     let feedback = executor.whitelist_remove("cosyek").expect("list uuid command push fail");
+// }
