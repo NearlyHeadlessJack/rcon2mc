@@ -25,7 +25,9 @@
 #![allow(dead_code)]
 #![allow(unused)]
 
+use crate::error::BPacketConverterError::InvalidPacket;
 use crate::error::RconError;
+use crate::error::RconError::PacketConversionError;
 use crate::parser::difficulty::weather;
 use crate::parser::tp::transfer;
 use crate::rcon_client::RconClient;
@@ -163,7 +165,15 @@ impl CommandExecutor {
     /// [`RconError::UnknownParserError`]: crate::error::RconError::UnknownParserError
     pub fn whitelist_add(&mut self, player: &str) -> Result<TargetStatus, RconError> {
         use crate::parser::whitelist_add::whitelist_add;
-        whitelist_add(&mut self.client, player)
+        let add_result = whitelist_add(&mut self.client, player);
+        match add_result {
+            Ok(result) => Ok(result),
+            Err(e) => match e {
+                // for 1.12.2
+                PacketConversionError(InvalidPacket(msg)) => Ok(TargetStatus::NotFound),
+                _ => Err(e),
+            },
+        }
     }
 
     /// Removes a player from the Minecraft server's whitelist.
