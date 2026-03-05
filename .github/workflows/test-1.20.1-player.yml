@@ -33,8 +33,7 @@ jobs:
           docker logs mc-cli-4
 
       - name: Setup nextest
-        run: |
-          cargo install --locked cargo-nextest
+        uses: taiki-e/install-action@nextest
 
       - name: Run Tests
         env:

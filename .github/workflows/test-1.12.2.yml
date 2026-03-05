@@ -20,8 +20,7 @@ jobs:
           sleep 10s
 
       - name: Setup nextest
-        run: |
-          cargo install --locked cargo-nextest
+        uses: taiki-e/install-action@nextest
 
       - name: Run Tests
         env:
