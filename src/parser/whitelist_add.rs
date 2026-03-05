@@ -36,13 +36,15 @@ pub fn whitelist_add(client: &mut RconClient, player: &str) -> Result<TargetStat
     if feedback.contains("That player does not exist") {
         return Ok(TargetStatus::NotFound);
     }
+    if feedback.contains("Could not add") {
+        return Ok(TargetStatus::NotFound);
+    }
     if feedback.contains("Player is already whitelisted") {
         return Ok(TargetStatus::Success(TargetStatusSuccess::Duplicated));
     }
     if feedback.contains("Added") {
         return Ok(TargetStatus::Success(TargetStatusSuccess::Success));
     }
-    dbg!(&feedback);
     Err(RconError::UnknownParserError(
         format!(
             "Unknown error when adding player {} to the whitelist.",

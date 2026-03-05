@@ -166,7 +166,6 @@ impl CommandExecutor {
     pub fn whitelist_add(&mut self, player: &str) -> Result<TargetStatus, RconError> {
         use crate::parser::whitelist_add::whitelist_add;
         let add_result = whitelist_add(&mut self.client, player);
-        dbg!(&add_result);
         match add_result {
             Ok(result) => Ok(result),
             Err(e) => match e {
