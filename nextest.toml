@@ -1,9 +1,0 @@
-[profile.default]
-retries = { backoff = "exponential", count = 5, delay = "1s", jitter = true, max-delay = "30s" }
-test-threads = 1
-[profile.ci]
-retries =  { backoff = "exponential", count = 5, delay = "1s", jitter = true, max-delay = "30s" }
-fail-fast = false # CI 中通常希望跑完所有测试，不要遇到一个失败就停止
-status-level = "all" # CI 中输出更详细的信息
-failure-output = "immediate-final" # 失败时立即且最终都输出
-test-threads = 1
