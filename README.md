@@ -77,7 +77,7 @@ For specific built-in wrapper commands, please refer to the [documentation](http
 <!--“从 EXCEL 发布网页”向导开始-->
 <!----------------------------->
 
-<div id="tests for rcon2mc_15133" align=center x:publishsource="Excel">
+<div id="index_3172" align=center x:publishsource="Excel">
 
 <table border=0 cellpadding=0 cellspacing=0 width=1328 style='border-collapse:
  collapse;table-layout:fixed;width:994pt'>
@@ -131,11 +131,11 @@ For specific built-in wrapper commands, please refer to the [documentation](http
   <td height=21 class=xl64 style='height:16.0pt;border-top:none'>ban_ip</td>
   <td class=xl64 style='border-top:none;border-left:none'>ip: &amp;str,reason:
   Option&lt;&amp;str&gt;,</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
   <td class=xl66 style='border-top:none'>-</td>
   <td class=xl63 style='border-top:none;border-left:none'>-</td>
   <td class=xl63 style='border-top:none;border-left:none'>-</td>
@@ -143,7 +143,7 @@ For specific built-in wrapper commands, please refer to the [documentation](http
   <td class=xl63 style='border-top:none;border-left:none'>-</td>
  </tr>
  <tr height=21 style='height:16.0pt'>
-  <td height=21 class=xl64 style='height:16.0pt;border-top:none'>banlist</td>
+  <td height=21 class=xl72 style='height:16.0pt;border-top:none'><s>banlist</s></td>
   <td class=xl64 style='border-top:none;border-left:none'>-</td>
   <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
   <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
@@ -189,11 +189,11 @@ For specific built-in wrapper commands, please refer to the [documentation](http
   <td height=21 class=xl64 style='height:16.0pt;border-top:none'>gamemode</td>
   <td class=xl64 style='border-top:none;border-left:none'>mode:
   &amp;str,target: Option&lt;&amp;str&gt;,</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
   <td class=xl66 style='border-top:none'>y</td>
   <td class=xl63 style='border-top:none;border-left:none'>y</td>
   <td class=xl63 style='border-top:none;border-left:none'>y</td>
@@ -204,11 +204,11 @@ For specific built-in wrapper commands, please refer to the [documentation](http
   <td height=21 class=xl64 style='height:16.0pt;border-top:none'>gamerule</td>
   <td class=xl64 style='border-top:none;border-left:none'>gamerule_name:
   &amp;str,value: &amp;str,</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
+  <td class=xl63 style='border-top:none;border-left:none'>-</td>
+  <td class=xl63 style='border-top:none;border-left:none'>-</td>
+  <td class=xl63 style='border-top:none;border-left:none'>-</td>
+  <td class=xl63 style='border-top:none;border-left:none'>-</td>
+  <td class=xl63 style='border-top:none;border-left:none'>-</td>
   <td class=xl66 style='border-top:none'>-</td>
   <td class=xl63 style='border-top:none;border-left:none'>-</td>
   <td class=xl63 style='border-top:none;border-left:none'>-</td>
@@ -262,11 +262,11 @@ For specific built-in wrapper commands, please refer to the [documentation](http
  <tr height=21 style='height:16.0pt'>
   <td height=21 class=xl64 style='height:16.0pt;border-top:none'>list</td>
   <td class=xl64 style='border-top:none;border-left:none'>-</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
   <td class=xl66 style='border-top:none'>y</td>
   <td class=xl63 style='border-top:none;border-left:none'>y</td>
   <td class=xl63 style='border-top:none;border-left:none'>y</td>
@@ -276,11 +276,11 @@ For specific built-in wrapper commands, please refer to the [documentation](http
  <tr height=21 style='height:16.0pt'>
   <td height=21 class=xl64 style='height:16.0pt;border-top:none'>list_uuid</td>
   <td class=xl64 style='border-top:none;border-left:none'>-</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl68 style='border-top:none;border-left:none'>TBD</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
+  <td class=xl68 style='border-top:none;border-left:none'>y</td>
   <td class=xl67 style='border-top:none'>y</td>
   <td class=xl63 style='border-top:none;border-left:none'>y</td>
   <td class=xl63 style='border-top:none;border-left:none'>y</td>
@@ -333,11 +333,11 @@ For specific built-in wrapper commands, please refer to the [documentation](http
  <tr height=21 style='height:16.0pt'>
   <td height=21 class=xl64 style='height:16.0pt;border-top:none'>pardon_ip</td>
   <td class=xl64 style='border-top:none;border-left:none'>ip: &amp;str</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
   <td class=xl66 style='border-top:none'>-</td>
   <td class=xl63 style='border-top:none;border-left:none'>-</td>
   <td class=xl63 style='border-top:none;border-left:none'>-</td>
@@ -347,11 +347,11 @@ For specific built-in wrapper commands, please refer to the [documentation](http
  <tr height=21 style='height:16.0pt'>
   <td height=21 class=xl64 style='height:16.0pt;border-top:none'>save</td>
   <td class=xl64 style='border-top:none;border-left:none'>save_type: &amp;str</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
   <td class=xl66 style='border-top:none'>-</td>
   <td class=xl63 style='border-top:none;border-left:none'>-</td>
   <td class=xl63 style='border-top:none;border-left:none'>-</td>
@@ -375,11 +375,11 @@ For specific built-in wrapper commands, please refer to the [documentation](http
  <tr height=21 style='height:16.0pt'>
   <td height=21 class=xl64 style='height:16.0pt;border-top:none'>stop</td>
   <td class=xl64 style='border-top:none;border-left:none'>-</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
-  <td class=xl68 style='border-top:none;border-left:none'>TBD</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
+  <td class=xl63 style='border-top:none;border-left:none'>y</td>
+  <td class=xl68 style='border-top:none;border-left:none'>y</td>
   <td class=xl67 style='border-top:none'>TBD</td>
   <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
   <td class=xl63 style='border-top:none;border-left:none'>TBD</td>
