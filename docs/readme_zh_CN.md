@@ -6,7 +6,7 @@
 [![Crates.io License](https://img.shields.io/crates/l/rcon2mc?style=for-the-badge)](https://github.com/NearlyHeadlessJack/rcon2mc/blob/main/LICENSE)
 [![Crates.io Version](https://img.shields.io/crates/v/rcon2mc?style=for-the-badge&logo=rust)](https://crates.io/crates/rcon2mc)
 [![docs.rs](https://img.shields.io/docsrs/rcon2mc?style=for-the-badge&logo=rust)](https://docs.rs/rcon2mc/latest/rcon2mc/)
-[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/nearlyheadlessjack/rcon2mc/publish-workflow.yml?style=for-the-badge&label=testing&color=blue)](https://github.com/NearlyHeadlessJack/rcon2mc/actions)
+[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/nearlyheadlessjack/rcon2mc/Build.yml?style=for-the-badge&label=testing&cacheSeconds=60)](https://github.com/NearlyHeadlessJack/rcon2mc/actions)
 
 #### rcon<sup>2mc</sup>是一个Rust编写的Minecraft [RCON协议](https://developer.valvesoftware.com/wiki/Source_RCON_Protocol)客户端库，用于远程在Java版Minecraft服务器上执行命令。      
   
