@@ -6,7 +6,7 @@ English | [简体中文](./docs/readme_zh_CN.md)
 [![Crates.io License](https://img.shields.io/crates/l/rcon2mc?style=for-the-badge)](https://github.com/NearlyHeadlessJack/rcon2mc/blob/main/LICENSE)
 [![Crates.io Version](https://img.shields.io/crates/v/rcon2mc?style=for-the-badge&logo=rust)](https://crates.io/crates/rcon2mc)
 [![docs.rs](https://img.shields.io/docsrs/rcon2mc?style=for-the-badge&logo=rust)](https://docs.rs/rcon2mc/latest/rcon2mc/)
-[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/nearlyheadlessjack/rcon2mc/Build.yml?style=for-the-badge&label=testing&cacheSeconds=60)](https://github.com/NearlyHeadlessJack/rcon2mc/actions)
+[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/nearlyheadlessjack/rcon2mc/Build.yml?style=for-the-badge&label=testing&cacheSeconds=60?branch=dev)](https://github.com/NearlyHeadlessJack/rcon2mc/actions)
 
 #### rcon<sup>2mc</sup> is a Minecraft [RCON protocol](https://developer.valvesoftware.com/wiki/Source_RCON_Protocol) client library in Rust, used for executing commands remotely on a Java Edition Minecraft server.
 
